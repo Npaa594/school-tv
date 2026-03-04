@@ -7,9 +7,13 @@
         :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
+        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; transition: background 1s; }
+        
         .logo-img { height: 8vh; width: auto; object-fit: contain; }
-        #weather-container { width: 20%; min-width: 150px; }
+        
+        /* Fixed Weather Box */
+        #weather-box { width: 250px; height: 100%; display: flex; align-items: center; overflow: hidden; border-radius: 5px; }
+        #weather-iframe { width: 100%; height: 100px; border: none; filter: invert(1) hue-rotate(180deg) brightness(1.5); }
         
         #clock-container { text-align: center; flex-grow: 1; }
         #clock { font-size: 3.5rem; font-weight: bold; line-height: 1; }
@@ -26,7 +30,7 @@
         .label { color: var(--gold); font-size: 1.2rem; text-transform: uppercase; margin-top: 20px; letter-spacing: 1px; }
         .data { font-size: 2.8rem; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 5px; }
 
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; }
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; transition: background 1s; }
         #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 35s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
@@ -34,17 +38,19 @@
 <body>
 
     <div id="header">
-        <div style="display: flex; align-items: center; width: 30%;">
+        <div style="display: flex; align-items: center; width: 35%;">
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img" style="margin-right: 15px;">
-            <div id="weather-container">
-                <a class="weatherwidget-io" href="https://forecast7.com/en/40k71n74k01/new-york/" data-label_1="NEW YORK" data-label_2="CURRENT" data-theme="pure" data-textcolor="#ffffff" >WEATHER</a>
+            <div id="weather-box">
+                <iframe id="weather-iframe" src="https://www.weather.gov/widgets/point/40.71,-74.01"></iframe>
             </div>
         </div>
+
         <div id="clock-container">
             <div id="clock">00:00:00</div>
             <div id="date">LOADING...</div>
         </div>
-        <div style="width: 30%; text-align: right;">
+
+        <div style="width: 35%; text-align: right;">
             <img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img">
         </div>
     </div>
@@ -62,10 +68,6 @@
     <div id="ticker">
         <div id="ticker-text">LOADING TICKER...</div>
     </div>
-
-    <script>
-    !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
-    </script>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbxHWkQxbHJnD_vzd_IH6G1pl-zEFCey_zTZpXv2_7_Ad5258OyJEEH4kxwHpa2WFOuS/exec";
@@ -89,13 +91,16 @@
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
+                
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
+
                 document.getElementById('ui-class').innerText = "Class " + data.schedule.class;
                 document.getElementById('ui-room').innerText = data.schedule.room;
                 document.getElementById('ui-subject').innerText = data.schedule.subject;
                 document.getElementById('ui-teacher').innerText = data.schedule.teacher;
+                
                 mediaItems = data.media;
                 if (isTransitioning) { setTimeout(updateData, 8000); }
             } catch(e) { console.error("Sync Error"); }
@@ -107,6 +112,7 @@
             const item = mediaItems[mediaIdx];
             const url = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`; 
             stage.innerHTML = '';
+
             if (item.type === 'image') {
                 const img = new Image();
                 img.src = url;
