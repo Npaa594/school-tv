@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>School Hallway Signage</title>
     <style>
-        :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; --grid-bg: #1e1e1e; }
+        :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
@@ -13,25 +13,24 @@
         #weather-box { width: 30%; font-size: 1.4rem; font-weight: bold; }
         #clock-container { text-align: center; flex-grow: 1; }
         #clock { font-size: 3.5rem; font-weight: bold; line-height: 1; }
-        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; margin-top: 5px; }
+        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
         
-        /* Visuals stay large on the left */
-        #visuals { width: 55%; height: 100%; display: flex; align-items: center; justify-content: center; background: black; }
+        /* Media on Left */
+        #visuals { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; background: black; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; }
 
-        /* New Sidebar Grid for All Grades */
-        #sidebar { width: 45%; background: var(--dark); display: flex; flex-direction: column; border-left: 5px solid var(--gold); padding: 10px; box-sizing: border-box; }
-        .sidebar-title { color: var(--gold); text-align: center; font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; text-transform: uppercase; }
+        /* Multi-Grade Sidebar on Right */
+        #sidebar { width: 50%; background: var(--dark); display: flex; flex-direction: column; border-left: 5px solid var(--gold); padding: 15px; box-sizing: border-box; }
+        .sidebar-title { color: var(--gold); text-align: center; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; border-bottom: 2px solid var(--gold); padding-bottom: 5px; }
         
-        #schedule-grid { display: grid; grid-template-columns: 1fr; gap: 10px; flex-grow: 1; overflow-y: auto; }
-        .grade-card { background: var(--grid-bg); border-radius: 8px; padding: 12px; border-left: 8px solid var(--school-blue); position: relative; }
-        .grade-num { color: var(--gold); font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #444; }
+        #schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex-grow: 1; align-content: start; }
+        .grade-card { background: #1e1e1e; border-radius: 8px; padding: 10px; border-left: 10px solid var(--school-blue); }
+        .grade-num { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; text-decoration: underline; }
         
-        .class-info { display: grid; grid-template-columns: 1fr 2fr; gap: 5px; }
-        .info-bit { font-size: 1.1rem; line-height: 1.3; }
-        .info-label { color: #888; font-weight: bold; text-transform: uppercase; font-size: 0.8rem; }
+        .info-line { font-size: 1.2rem; margin-bottom: 4px; line-height: 1.2; }
+        .info-label { color: #aaa; font-size: 0.9rem; text-transform: uppercase; margin-right: 5px; }
         .info-val { font-weight: bold; color: white; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; }
@@ -44,7 +43,7 @@
     <div id="header">
         <div style="display: flex; align-items: center; width: 35%;">
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img" style="margin-right: 15px;">
-            <div id="weather-box"><span id="w-temp">Loading Weather...</span></div>
+            <div id="weather-box"><span id="w-temp">---°F</span></div>
         </div>
         <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
         <div style="width: 35%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
@@ -53,16 +52,15 @@
     <div id="main-area">
         <div id="visuals"></div>
         <div id="sidebar">
-            <div class="sidebar-title">Current Locations</div>
-            <div id="schedule-grid">
-                </div>
+            <div class="sidebar-title">Current Class Locations</div>
+            <div id="schedule-grid"></div>
         </div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">LOADING TICKER...</div></div>
+    <div id="ticker"><div id="ticker-text">LOADING...</div></div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxHWkQxbHJnD_vzd_IH6G1pl-zEFCey_zTZpXv2_7_Ad5258OyJEEH4kxwHpa2WFOuS/exec";
+        const API_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE"; // PASTE YOUR URL HERE
         let mediaItems = [];
         let mediaIdx = 0;
 
@@ -71,7 +69,7 @@
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true&temperature_unit=fahrenheit');
                 const data = await res.json();
                 document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F NYC";
-            } catch (e) { document.getElementById('w-temp').innerText = "Weather Unavailable"; }
+            } catch (e) { document.getElementById('w-temp').innerText = "Weather Error"; }
         }
 
         function updateTime() {
@@ -85,46 +83,38 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 
-                // Set Theme
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
-                // Build the Grid for ALL grades
                 const grid = document.getElementById('schedule-grid');
-                grid.innerHTML = ''; // Clear old data
+                grid.innerHTML = ''; 
 
-                // 'allSchedules' should be an array of objects from your Google Script
-                // Each object: { grade: "601", room: "342", subject: "Math", teacher: "Byrne" }
                 data.allSchedules.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'grade-card';
                     card.innerHTML = `
                         <div class="grade-num">Grade ${item.grade}</div>
-                        <div class="class-info">
-                            <div><span class="info-label">Room:</span><br><span class="info-val">${item.room}</span></div>
-                            <div><span class="info-label">Subject:</span><br><span class="info-val">${item.subject}</span></div>
-                            <div style="grid-column: span 2; margin-top:5px;"><span class="info-label">Teacher:</span> <span class="info-val">${item.teacher}</span></div>
-                        </div>
+                        <div class="info-line"><span class="info-label">Room:</span><span class="info-val">${item.room}</span></div>
+                        <div class="info-line"><span class="info-label">Sub:</span><span class="info-val">${item.subject}</span></div>
+                        <div class="info-line"><span class="info-label">Tea:</span><span class="info-val">${item.teacher}</span></div>
                     `;
                     grid.appendChild(card);
                 });
                 
                 mediaItems = data.media;
-            } catch(e) { console.error("Sync Error", e); }
+            } catch(e) { console.error("Sync Error"); }
         }
 
         function playMedia() {
             const stage = document.getElementById('visuals');
             if (mediaItems.length === 0) return;
             const item = mediaItems[mediaIdx];
-            const url = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`; 
             stage.innerHTML = '';
 
             if (item.type === 'image') {
                 const img = new Image();
-                img.src = url;
-                img.onerror = function() { this.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
+                img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
                 stage.appendChild(img);
                 setTimeout(playMedia, 5000); 
             } else {
@@ -137,11 +127,9 @@
             mediaIdx = (mediaIdx + 1) % mediaItems.length;
         }
 
-        setTimeout(() => location.reload(), 3600000);
         setInterval(updateTime, 1000);
         setInterval(updateData, 60000); 
         setInterval(fetchWeather, 600000);
-        
         updateData().then(() => playMedia());
         updateTime();
         fetchWeather();
