@@ -111,26 +111,60 @@
             } catch(e) { console.error("Sync Error"); }
         }
 
-        function playMedia() {
-            const stage = document.getElementById('visuals');
-            if (mediaItems.length === 0) return;
-            const item = mediaItems[mediaIdx];
-            stage.innerHTML = '';
+      function playMedia() {
+    const stage = document.getElementById('visuals');
+    if (!mediaItems || mediaItems.length === 0) return;
+    
+    const item = mediaItems[mediaIdx];
+    stage.innerHTML = ''; // Clear previous content
 
-            if (item.type === 'image') {
-                const img = new Image();
-                img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
-                stage.appendChild(img);
-                setTimeout(playMedia, 5000); 
-            } else {
-                const vid = document.createElement('video');
-                vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
-                vid.autoplay = true; vid.muted = true;
-                vid.onended = playMedia;
-                stage.appendChild(vid);
-            }
+    if (item.type === 'image') {
+        const img = new Image();
+        // Standard thumbnail link for high-speed loading
+        img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "contain";
+        
+        img.onerror = function() {
+            console.log("Image failed, skipping...");
             mediaIdx = (mediaIdx + 1) % mediaItems.length;
-        }
+            playMedia();
+        };
+
+        stage.appendChild(img);
+        setTimeout(playMedia, 5000); 
+    } else {
+        // VIDEO FIX FOR CHROMEBOX
+        const vid = document.createElement('video');
+        vid.style.width = "100%";
+        vid.style.height = "100%";
+        vid.autoplay = true; 
+        vid.muted = true; // Chrome requires videos to be muted to autoplay
+        vid.playsInline = true;
+
+        // Use the 'uc' link but add a timestamp to prevent caching issues
+        vid.src = `https://drive.google.com/uc?export=download&id=${item.id}&t=${new Date().getTime()}`;
+
+        vid.onended = function() {
+            mediaIdx = (mediaIdx + 1) % mediaItems.length;
+            playMedia();
+        };
+
+        vid.onerror = function() {
+            console.error("Video failed to play. Skipping to next.");
+            mediaIdx = (mediaIdx + 1) % mediaItems.length;
+            playMedia();
+        };
+
+        stage.appendChild(vid);
+    }
+    
+    // Increment index for the NEXT call (unless it's a video, which increments onended)
+    if (item.type === 'image') {
+        mediaIdx = (mediaIdx + 1) % mediaItems.length;
+    }
+}
 
         setInterval(updateTime, 1000);
         setInterval(updateData, 60000); 
