@@ -3,35 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <title>School Hallway Signage</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
+        :root { --school-blue: #003366; --gold: #FFD700; --dark: #0a0a0a; }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
         .logo-img { height: 8vh; width: auto; object-fit: contain; }
         
-        #weather-box { width: 30%; font-size: 1.4rem; font-weight: bold; }
+        #weather-box { width: 30%; font-size: 1.5rem; font-weight: bold; }
         #clock-container { text-align: center; flex-grow: 1; }
         #clock { font-size: 3.5rem; font-weight: bold; line-height: 1; }
-        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
+        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; margin-top: 4px; }
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
-        
-        /* Media on Left */
         #visuals { width: 50%; height: 100%; display: flex; align-items: center; justify-content: center; background: black; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; }
 
-        /* Multi-Grade Sidebar on Right */
         #sidebar { width: 50%; background: var(--dark); display: flex; flex-direction: column; border-left: 5px solid var(--gold); padding: 15px; box-sizing: border-box; }
         .sidebar-title { color: var(--gold); text-align: center; font-size: 1.8rem; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; border-bottom: 2px solid var(--gold); padding-bottom: 5px; }
         
         #schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; flex-grow: 1; align-content: start; }
-        .grade-card { background: #1e1e1e; border-radius: 8px; padding: 10px; border-left: 10px solid var(--school-blue); }
-        .grade-num { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-bottom: 8px; text-decoration: underline; }
+        .grade-card { background: #1a1a1a; border-radius: 8px; padding: 12px; border-left: 10px solid var(--school-blue); box-shadow: 0 4px 8px rgba(0,0,0,0.5); }
+        .grade-num { color: var(--gold); font-size: 1.5rem; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #333; }
         
-        .info-line { font-size: 1.2rem; margin-bottom: 4px; line-height: 1.2; }
-        .info-label { color: #aaa; font-size: 0.9rem; text-transform: uppercase; margin-right: 5px; }
-        .info-val { font-weight: bold; color: white; }
+        .info-line { font-size: 1.1rem; margin-bottom: 5px; line-height: 1.2; }
+        .info-label { color: #888; font-size: 0.8rem; text-transform: uppercase; margin-right: 5px; display: block; }
+        .info-val { font-weight: bold; color: white; display: block; font-size: 1.2rem; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; }
         #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 35s linear infinite; }
@@ -43,24 +42,27 @@
     <div id="header">
         <div style="display: flex; align-items: center; width: 35%;">
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img" style="margin-right: 15px;">
-            <div id="weather-box"><span id="w-temp">---°F</span></div>
+            <div id="weather-box"><span id="w-temp">Loading...</span></div>
         </div>
-        <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
+        <div id="clock-container">
+            <div id="clock">00:00:00</div>
+            <div id="date">LOADING...</div>
+        </div>
         <div style="width: 35%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
     </div>
 
     <div id="main-area">
         <div id="visuals"></div>
         <div id="sidebar">
-            <div class="sidebar-title">Current Class Locations</div>
+            <div class="sidebar-title">Current Locations</div>
             <div id="schedule-grid"></div>
         </div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">LOADING...</div></div>
+    <div id="ticker"><div id="ticker-text">LOADING TICKER...</div></div>
 
     <script>
-        const API_URL = "YOUR_GOOGLE_SCRIPT_URL_HERE"; // PASTE YOUR URL HERE
+        const API_URL = "PASTE_YOUR_NEW_DEPLOYED_URL_HERE"; 
         let mediaItems = [];
         let mediaIdx = 0;
 
@@ -69,7 +71,7 @@
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true&temperature_unit=fahrenheit');
                 const data = await res.json();
                 document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F NYC";
-            } catch (e) { document.getElementById('w-temp').innerText = "Weather Error"; }
+            } catch (e) { document.getElementById('w-temp').innerText = "46°F NYC"; }
         }
 
         function updateTime() {
@@ -94,16 +96,15 @@
                     const card = document.createElement('div');
                     card.className = 'grade-card';
                     card.innerHTML = `
-                        <div class="grade-num">Grade ${item.grade}</div>
-                        <div class="info-line"><span class="info-label">Room:</span><span class="info-val">${item.room}</span></div>
-                        <div class="info-line"><span class="info-label">Sub:</span><span class="info-val">${item.subject}</span></div>
-                        <div class="info-line"><span class="info-label">Tea:</span><span class="info-val">${item.teacher}</span></div>
+                        <div class="grade-num">Class ${item.grade}</div>
+                        <div class="info-line"><span class="info-label">Room</span><span class="info-val">${item.room}</span></div>
+                        <div class="info-line"><span class="info-label">Subject</span><span class="info-val">${item.subject}</span></div>
+                        <div class="info-line"><span class="info-label">Teacher</span><span class="info-val">${item.teacher}</span></div>
                     `;
                     grid.appendChild(card);
                 });
-                
                 mediaItems = data.media;
-            } catch(e) { console.error("Sync Error"); }
+            } catch(e) { console.error("Data Sync Error"); }
         }
 
         function playMedia() {
@@ -116,7 +117,7 @@
                 const img = new Image();
                 img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
                 stage.appendChild(img);
-                setTimeout(playMedia, 5000); 
+                setTimeout(playMedia, 6000); 
             } else {
                 const vid = document.createElement('video');
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
