@@ -59,7 +59,7 @@
 
     <div id="ticker"><div id="ticker-text">CONNECTING TO DRIVE...</div></div>
 
-  <script>
+ <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec";
         let mediaItems = [];
         let mediaIdx = 0;
@@ -92,15 +92,13 @@
                 const res = await fetch(API_URL + "?t=" + Date.now());
                 const data = await res.json();
                 
-                // Update Styles from Spreadsheet
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary || "#003366");
                 document.documentElement.style.setProperty('--gold', data.settings.accent || "#FFD700");
                 document.documentElement.style.setProperty('--ticker-speed', (data.settings.tickerSpeed || 110) + 's');
                 document.documentElement.style.setProperty('--sidebar-speed', (data.settings.sidebarSpeed || 2.5) + 's');
-                document.getElementById('ticker-text').innerText = data.settings.ticker || "Welcome!";
+                document.getElementById('ticker-text').innerText = data.settings.ticker || "Syncing...";
                 imgDuration = (data.settings.imageDuration || 15) * 1000;
 
-                // Update Sidebar Schedule
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
                     let html = `<h2 style="color:var(--gold); text-align:center; margin-bottom:15px; font-size:1.8rem;">CLASS LOCATIONS</h2>
@@ -123,15 +121,12 @@
                         <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
                 }
 
-                // Update Media List
                 mediaItems = data.media;
-
-                // Sync Refresh Rate
                 const nextRefresh = Math.max(0.5, data.settings.refreshRate) * 60000;
                 clearInterval(refreshInterval);
                 refreshInterval = setInterval(updateData, nextRefresh);
 
-            } catch(e) { console.error("Data Sync Error:", e); }
+            } catch(e) { console.error("Data Error", e); }
         }
 
         function playMedia() {
@@ -144,32 +139,25 @@
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
             
-            // THE DIRECT LINK FIX:
-            const driveUrl = `https://drive.google.com/uc?id=${item.id}&export=download`;
-
             if (item.type === 'video') {
                 const vid = document.createElement('video');
-                vid.style.width = "100%";
-                vid.style.height = "100%";
+                vid.style.width = vid.style.height = "100%";
                 vid.muted = true; 
                 vid.autoplay = true; 
                 vid.playsInline = true;
                 vid.setAttribute('playsinline', 'true');
-                vid.src = driveUrl;
+                // VIDEO LINK (Direct Download)
+                vid.src = `https://drive.google.com/uc?id=${item.id}&export=download`;
                 
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                vid.onerror = (err) => { 
-                    console.error("Video failed to load:", item.id);
-                    mediaIdx = (mediaIdx + 1) % mediaItems.length; 
-                    playMedia(); 
-                };
+                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
-                vid.play().catch(e => console.log("Autoplay prevented, retrying..."));
+                vid.play();
             } else {
                 const img = new Image();
-                img.src = driveUrl;
-                img.style.width = "100%";
-                img.style.height = "100%";
+                // IMAGE LINK (High-Res Thumbnail hack - works better on Smart TVs)
+                img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
+                img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
                 
                 img.onload = () => {
@@ -180,19 +168,16 @@
                     }, imgDuration);
                 };
                 img.onerror = () => { 
-                    console.error("Image failed to load:", item.id);
                     mediaIdx = (mediaIdx + 1) % mediaItems.length; 
                     playMedia(); 
                 };
             }
         }
 
-        // STARTUP
         setInterval(updateTime, 1000);
         fetchWeather();
-        setInterval(fetchWeather, 600000);
         updateData().then(() => {
-            setTimeout(playMedia, 1500);
+            setTimeout(playMedia, 2000);
         });
         updateTime();
     </script>
