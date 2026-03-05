@@ -2,10 +2,10 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>School Signage - All Grades</title>
+    <title>School Signage System</title>
     <style>
         :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
-        body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { margin: 0; background: black; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
         .logo-img { height: 8vh; width: auto; object-fit: contain; }
@@ -17,19 +17,18 @@
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
         #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width 0.7s ease-in-out; }
-        #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; }
+        #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
-        /* Sidebar: Now a scrolling container for all grades */
+        /* Sidebar: All Classes List */
         #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; overflow-y: auto; transition: all 0.7s ease-in-out; border-left: 0px solid var(--gold); }
-        .bell-active #visuals { width: 45%; }
-        .bell-active #sidebar { width: 55%; padding: 15px; opacity: 1; border-left: 5px solid var(--gold); }
+        .bell-active #visuals { width: 55%; }
+        .bell-active #sidebar { width: 45%; padding: 20px; opacity: 1; border-left: 5px solid var(--gold); }
 
-        .grade-card { background: #1e1e1e; border-radius: 8px; padding: 10px; margin-bottom: 10px; border-left: 8px solid var(--school-blue); }
-        .grade-header { color: var(--gold); font-size: 1.4rem; font-weight: bold; margin-bottom: 5px; border-bottom: 1px solid #333; }
-        
-        .info-row { display: grid; grid-template-columns: 1fr 2fr 2fr; gap: 5px; font-size: 1.1rem; }
-        .label-sm { color: #888; font-size: 0.7rem; text-transform: uppercase; }
-        .val-sm { font-weight: bold; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sched-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; margin-bottom: 5px; background: #1a1a1a; border-radius: 4px; }
+        .grade-box { width: 60px; font-weight: bold; font-size: 1.4rem; color: var(--gold); border-right: 2px solid var(--school-blue); margin-right: 15px; }
+        .info-box { flex-grow: 1; }
+        .subject-text { font-size: 1.2rem; font-weight: bold; display: block; }
+        .room-teacher { font-size: 0.9rem; color: #aaa; text-transform: uppercase; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; }
         #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 35s linear infinite; }
@@ -50,15 +49,15 @@
     <div id="main-area">
         <div id="visuals"></div>
         <div id="sidebar">
-            <h2 style="color:var(--gold); text-align:center; margin-top:0;">CLASS LOCATIONS</h2>
-            <div id="schedule-grid"></div>
+            <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">CLASS LOCATIONS</h2>
+            <div id="schedule-list"></div>
         </div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">LOADING...</div></div>
+    <div id="ticker"><div id="ticker-text">LOADING TICKER...</div></div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxHWkQxbHJnD_vzd_IH6G1pl-zEFCey_zTZpXv2_7_Ad5258OyJEEH4kxwHpa2WFOuS/exec";
+        const API_URL = "PASTE_YOUR_NEW_DEPLOYED_URL_HERE"; 
         let mediaItems = [];
         let mediaIdx = 0;
 
@@ -77,7 +76,7 @@
             
             const timeNum = now.getHours() * 100 + now.getMinutes();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
-            // Display sidebar for 5 minutes after each bell
+            // If current time is within 5 minutes of any bell, show sidebar
             const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
             document.getElementById('main-area').className = isBell ? "bell-active" : "";
         }
@@ -86,99 +85,56 @@
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
-                const grid = document.getElementById('schedule-grid');
-                grid.innerHTML = ''; 
-
+                const list = document.getElementById('schedule-list');
+                list.innerHTML = ''; 
                 data.allSchedules.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'grade-card';
-                    card.innerHTML = `
-                        <div class="grade-header">Class ${item.class}</div>
-                        <div class="info-row">
-                            <div><div class="label-sm">Room</div><div class="val-sm">${item.room}</div></div>
-                            <div><div class="label-sm">Subject</div><div class="val-sm">${item.subject}</div></div>
-                            <div><div class="label-sm">Teacher</div><div class="val-sm">${item.teacher}</div></div>
+                    const row = document.createElement('div');
+                    row.className = 'sched-row';
+                    row.innerHTML = `
+                        <div class="grade-box">${item.class}</div>
+                        <div class="info-box">
+                            <span class="subject-text">${item.subject}</span>
+                            <span class="room-teacher">Room ${item.room} • ${item.teacher}</span>
                         </div>
                     `;
-                    grid.appendChild(card);
+                    list.appendChild(row);
                 });
                 mediaItems = data.media;
             } catch(e) { console.error("Sync Error"); }
         }
 
-    function playMedia() {
-    const stage = document.getElementById('visuals');
-    if (!mediaItems || mediaItems.length === 0) return;
-    
-    const item = mediaItems[mediaIdx];
-    stage.innerHTML = ''; 
+        function playMedia() {
+            const stage = document.getElementById('visuals');
+            if (!mediaItems || mediaItems.length === 0) return;
+            const item = mediaItems[mediaIdx];
+            stage.innerHTML = '';
 
-    if (item.type === 'video') {
-        const vid = document.createElement('video');
-        vid.style.width = "100%";
-        vid.style.height = "100%";
-        vid.style.backgroundColor = "black";
-        
-        // VIEWSONIC / ANDROID FLAGS
-        vid.setAttribute('muted', 'muted');
-        vid.setAttribute('autoplay', 'autoplay');
-        vid.setAttribute('playsinline', 'true');
-        vid.setAttribute('webkit-playsinline', 'true'); // For older Android engines
-        vid.muted = true;
-        vid.autoplay = true;
-
-        vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
-
-        vid.onended = () => {
-            mediaIdx = (mediaIdx + 1) % mediaItems.length;
-            playMedia();
-        };
-
-        vid.onerror = () => {
-            mediaIdx = (mediaIdx + 1) % mediaItems.length;
-            playMedia();
-        };
-
-        stage.appendChild(vid);
-        
-        // Force a load and play for Android Media Player
-        vid.load();
-        var playPromise = vid.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(error => {
-                console.log("ViewSonic block: ", error);
-                // Fallback: Skip if the device refuses to play
-                setTimeout(() => {
-                    mediaIdx = (mediaIdx + 1) % mediaItems.length;
-                    playMedia();
-                }, 3000);
-            });
+            if (item.type === 'video') {
+                const vid = document.createElement('video');
+                vid.style.width = "100%"; vid.style.height = "100%";
+                vid.muted = true; vid.autoplay = true; 
+                vid.setAttribute('playsinline', 'true');
+                vid.setAttribute('webkit-playsinline', 'true');
+                vid.src = `https://drive.google.com/uc?export=download&id=${item.id}&v=${new Date().getTime()}`;
+                vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                stage.appendChild(vid);
+                vid.play().catch(e => { console.log("Blocked:", e); });
+            } else {
+                const img = new Image();
+                img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
+                img.onload = () => {
+                    stage.appendChild(img);
+                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, 6000);
+                };
+                img.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+            }
         }
-    } else {
-        // IMAGE LOGIC (Remains the same)
-        const img = new Image();
-        img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
-        img.style.width = "100%";
-        img.style.height = "100%";
-        img.style.objectFit = "contain";
-        img.onload = () => {
-            stage.appendChild(img);
-            setTimeout(() => {
-                mediaIdx = (mediaIdx + 1) % mediaItems.length;
-                playMedia();
-            }, 5000); 
-        };
-        img.onerror = () => {
-            mediaIdx = (mediaIdx + 1) % mediaItems.length;
-            playMedia();
-        };
-    }
-}
+
         setInterval(updateTime, 1000);
         setInterval(updateData, 60000); 
         setInterval(fetchWeather, 600000);
