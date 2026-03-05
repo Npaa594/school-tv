@@ -4,7 +4,13 @@
     <meta charset="UTF-8">
     <title>School Signage</title>
     <style>
-        :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
+        :root { 
+            --school-blue: #003366; 
+            --gold: #FFD700; 
+            --dark: #121212;
+            --ticker-speed: 110s;
+            --sidebar-speed: 2.5s;
+        }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
@@ -15,10 +21,10 @@
         #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
-        #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width 2.5s ease-in-out; }
+        #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width var(--sidebar-speed) ease-in-out; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
-        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all 2.5s ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
+        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
         .bell-active #visuals { width: 50%; }
         .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
 
@@ -31,7 +37,7 @@
         .grade-col { color: var(--gold); font-weight: bold; width: 60px; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
-        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 110s linear infinite; }
+        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
@@ -58,6 +64,7 @@
         let mediaItems = [];
         let mediaIdx = 0;
         let isBellTime = false;
+        let imgDuration = 15000;
 
         async function fetchWeather() {
             try {
@@ -84,9 +91,14 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 
+                // Update CSS Variables from Spreadsheet
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
+                document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
+                document.documentElement.style.setProperty('--sidebar-speed', data.settings.sidebarSpeed + 's');
+                
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
+                imgDuration = data.settings.imageDuration * 1000;
 
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
@@ -95,7 +107,6 @@
                         html += `<tr><td class="grade-col">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td style="color:#bbb; font-size:0.9rem;">${s.teacher}</td></tr>`;
                     });
                     sidebar.innerHTML = html + '</table>';
-                    setTimeout(updateData, 8000); 
                 } else {
                     sidebar.innerHTML = `
                         <div class="label">Rotation</div><div class="data">${data.rotatingSchedule.class}</div>
@@ -128,12 +139,12 @@
                 vid.play();
             } else {
                 const img = new Image();
-                img.src = `https://lh3.googleusercontent.com/d/$${item.id}`;
+                img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
                 img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
                 img.onload = () => {
                     stage.appendChild(img);
-                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, 15000);
+                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, imgDuration);
                 };
                 img.onerror = () => { img.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
             }
