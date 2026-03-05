@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>School Signage</title>
+    <title>School Signage - Final Build</title>
     <style>
         :root { 
             --school-blue: #003366; 
@@ -81,7 +81,6 @@
             document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
             
             const timeNum = now.getHours() * 100 + now.getMinutes();
-            // Checking if current time is within 5 minutes of a bell transition
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
             const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
             document.getElementById('main-area').className = isBell ? "bell-active" : "";
@@ -93,7 +92,6 @@
                 const res = await fetch(API_URL + "?t=" + Date.now());
                 const data = await res.json();
                 
-                // Sync Styles and Speeds
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
@@ -101,7 +99,6 @@
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
                 imgDuration = (data.settings.imageDuration || 15) * 1000;
 
-                // Sync Schedule
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
                     let html = `<h2 style="color:var(--gold); text-align:center; margin-bottom:15px; font-size:1.8rem;">CLASS LOCATIONS</h2>
@@ -124,7 +121,6 @@
                         <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
                 }
 
-                // Dynamic Refresh rate from Sheet
                 const nextRefresh = Math.max(0.5, data.settings.refreshRate) * 60000;
                 clearInterval(refreshInterval);
                 refreshInterval = setInterval(updateData, nextRefresh);
@@ -132,7 +128,7 @@
                 mediaItems = data.media;
             } catch(e) { 
                 console.error("Update Failed", e); 
-                document.getElementById('ticker-text').innerText = "OFFLINE - CHECKING CONNECTION...";
+                document.getElementById('ticker-text').innerText = "CONNECTING TO DATA...";
             }
         }
 
@@ -145,21 +141,20 @@
             
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
+            const driveUrl = `https://drive.google.com/uc?export=download&id=${item.id}`;
 
             if (item.type === 'video') {
                 const vid = document.createElement('video');
                 vid.style.width = vid.style.height = "100%";
                 vid.muted = true; vid.autoplay = true; 
                 vid.setAttribute('playsinline', 'true');
-                // Direct stream link
-                vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
+                vid.src = driveUrl;
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
             } else {
                 const img = new Image();
-                // Direct stream link
-                img.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
+                img.src = driveUrl;
                 img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
                 img.onload = () => {
@@ -173,15 +168,11 @@
             }
         }
 
-        // Initialize
         setInterval(updateTime, 1000);
         fetchWeather();
         setInterval(fetchWeather, 600000);
-        
-        // Initial Data Fetch then Start Media
-        updateData().then(() => {
-            setTimeout(playMedia, 2000);
-        });
+        updateData().then(() => setTimeout(playMedia, 2000));
+        updateTime();
     </script>
 </body>
 </html>
