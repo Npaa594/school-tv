@@ -2,48 +2,44 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>School Signage System</title>
+    <title>School Signage</title>
     <style>
         :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
-        body { margin: 0; background: black; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
         #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
         .logo-img { height: 8vh; width: auto; }
         
-        #weather-box { width: 30%; font-size: 1.4rem; font-weight: bold; }
         #clock-container { text-align: center; flex-grow: 1; }
-        #clock { font-size: 3.5rem; font-weight: bold; line-height: 1; }
-        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; margin-top: 5px; }
+        #clock { font-size: 3.5rem; font-weight: bold; }
+        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
         #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width 2.5s ease-in-out; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
-        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all 2.5s ease-in-out; border-left: 0px solid var(--gold); overflow-y: auto; }
-        
-        /* Bell Active State - Slower Slide out */
+        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all 2.5s ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
         .bell-active #visuals { width: 50%; }
         .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
 
-        .label { color: var(--gold); font-size: 1.2rem; text-transform: uppercase; margin-top: 15px; letter-spacing: 1px; }
-        .data { font-size: 2.5rem; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 5px; margin-bottom: 5px; }
-        
-        /* Table Style for All Classes */
+        .label { color: var(--gold); font-size: 1.2rem; text-transform: uppercase; margin-top: 15px; }
+        .data { font-size: 2.8rem; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 5px; }
+
         .sched-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         .sched-table td { padding: 8px; border-bottom: 1px solid #333; font-size: 1.1rem; }
-        .grade-col { color: var(--gold); font-weight: bold; width: 20%; }
+        .grade-col { color: var(--gold); font-weight: bold; width: 60px; }
 
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; }
-        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 110s linear infinite; } /* SLOWEST SPEED */
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
+        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 110s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="display: flex; align-items: center; width: 35%;">
+        <div style="width: 35%; display: flex; align-items: center;">
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img">
-            <div id="weather-box" style="margin-left:20px;"><span id="w-temp">Weather...</span></div>
+            <div id="w-temp" style="margin-left:20px; font-size: 1.4rem; font-weight: bold;">Loading...</div>
         </div>
         <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
         <div style="width: 35%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
@@ -51,21 +47,21 @@
 
     <div id="main-area">
         <div id="visuals"></div>
-        <div id="sidebar" id="sidebar-content"></div>
+        <div id="sidebar"></div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">INITIALIZING SYSTEM...</div></div>
+    <div id="ticker"><div id="ticker-text">CONNECTING TO DRIVE...</div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec";
         let mediaItems = [];
         let mediaIdx = 0;
-        let isTransitionActive = false;
+        let isBellTime = false;
 
         async function fetchWeather() {
             try {
-                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true&temperature_unit=fahrenheit');
-                const data = await response.json();
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true&temperature_unit=fahrenheit');
+                const data = await res.json();
                 document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F NYC";
             } catch (e) { document.getElementById('w-temp').innerText = "NYC"; }
         }
@@ -77,10 +73,9 @@
             
             const timeNum = now.getHours() * 100 + now.getMinutes();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
-            // If current time is within 5 minutes of any bell, show sidebar with all classes
             const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
             document.getElementById('main-area').className = isBell ? "bell-active" : "";
-            isTransitionActive = isBell;
+            isBellTime = isBell;
         }
 
         async function updateData() {
@@ -93,23 +88,19 @@
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
                 const sidebar = document.getElementById('sidebar');
-                if (isTransitionActive) {
-                    // Show Table of all 12 classes
+                if (isBellTime) {
                     let html = '<h2 style="color:var(--gold); text-align:center; margin-top:0;">CLASS LOCATIONS</h2><table class="sched-table">';
                     data.allSchedules.forEach(s => {
                         html += `<tr><td class="grade-col">${s.class}</td><td>${s.subject}</td><td>RM ${s.room}</td></tr>`;
                     });
-                    html += '</table>';
-                    sidebar.innerHTML = html;
-                    setTimeout(updateData, 8000); // Faster update during transitions
+                    sidebar.innerHTML = html + '</table>';
+                    setTimeout(updateData, 8000); 
                 } else {
-                    // Show Single Rotating Class
                     sidebar.innerHTML = `
                         <div class="label">Rotation</div><div class="data">${data.rotatingSchedule.class}</div>
                         <div class="label">Room</div><div class="data">${data.rotatingSchedule.room}</div>
                         <div class="label">Subject</div><div class="data">${data.rotatingSchedule.subject}</div>
-                        <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>
-                    `;
+                        <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
                 }
                 mediaItems = data.media;
             } catch(e) { console.error("Sync Error"); }
@@ -117,16 +108,19 @@
 
         function playMedia() {
             const stage = document.getElementById('visuals');
-            if (!mediaItems || mediaItems.length === 0) return;
+            if (!mediaItems || mediaItems.length === 0) {
+                setTimeout(playMedia, 3000);
+                return;
+            }
+            
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
 
             if (item.type === 'video') {
                 const vid = document.createElement('video');
-                vid.style.width = "100%"; vid.style.height = "100%";
+                vid.style.width = vid.style.height = "100%";
                 vid.muted = true; vid.autoplay = true; 
                 vid.setAttribute('playsinline', 'true');
-                vid.setAttribute('webkit-playsinline', 'true');
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
@@ -134,15 +128,18 @@
                 vid.play();
             } else {
                 const img = new Image();
-                img.crossOrigin = "anonymous";
-                img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
-                img.style.width = "100%"; img.style.height = "100%";
+                // CHROME FIX: Bypasses standard Drive CORS blocks
+                img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
+                img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
                 img.onload = () => {
                     stage.appendChild(img);
                     setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, 15000);
                 };
-                img.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                img.onerror = () => {
+                    // Fallback URL if GoogleUserContent fails
+                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
+                };
             }
         }
 
