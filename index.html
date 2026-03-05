@@ -69,42 +69,61 @@
             } catch (e) { document.getElementById('w-temp').innerText = "---°F"; }
         }
 
-        function updateTime() {
+   function updateTime() {
             const now = new Date();
+            // Ensure we are using NYC time for the schedule calculation
+            const nycTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+            
             document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
             
-            const timeNum = now.getHours() * 100 + now.getMinutes();
+            const hours = nycTime.getHours();
+            const mins = nycTime.getMinutes();
+            const timeNum = hours * 100 + mins;
+
+            // Updated Bell Times - Expanded to 7 minutes to ensure visibility
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
-            // If current time is within 5 minutes of any bell, show sidebar
-            const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
+            const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 7));
+            
+            // Apply the class to trigger the CSS transition
             document.getElementById('main-area').className = isBell ? "bell-active" : "";
         }
 
         async function updateData() {
             try {
                 const res = await fetch(API_URL);
+                if (!res.ok) throw new Error("Network response was not ok");
                 const data = await res.json();
+                
+                // Update Colors and Ticker
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
+                // Populate Sidebar
                 const list = document.getElementById('schedule-list');
-                list.innerHTML = ''; 
-                data.allSchedules.forEach(item => {
-                    const row = document.createElement('div');
-                    row.className = 'sched-row';
-                    row.innerHTML = `
-                        <div class="grade-box">${item.class}</div>
-                        <div class="info-box">
-                            <span class="subject-text">${item.subject}</span>
-                            <span class="room-teacher">Room ${item.room} • ${item.teacher}</span>
-                        </div>
-                    `;
-                    list.appendChild(row);
-                });
+                if (data.allSchedules && data.allSchedules.length > 0) {
+                    list.innerHTML = ''; 
+                    data.allSchedules.forEach(item => {
+                        const row = document.createElement('div');
+                        row.className = 'sched-row';
+                        row.innerHTML = `
+                            <div class="grade-box">${item.class}</div>
+                            <div class="info-box">
+                                <span class="subject-text">${item.subject}</span>
+                                <span class="room-teacher">Room ${item.room} • ${item.teacher}</span>
+                            </div>
+                        `;
+                        list.appendChild(row);
+                    });
+                }
+                
                 mediaItems = data.media;
-            } catch(e) { console.error("Sync Error"); }
+            } catch(e) { 
+                console.error("Data Load Error:", e);
+                // Fallback ticker if data fails
+                document.getElementById('ticker-text').innerText = "OFFLINE - CHECKING CONNECTION...";
+            }
         }
 
         function playMedia() {
