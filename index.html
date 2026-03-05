@@ -2,164 +2,121 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>School Signage System</title>
+    <title>School Signage</title>
     <style>
-        :root { --school-blue: #003366; --gold: #FFD700; --dark: #121212; }
-        body { margin: 0; background: black; color: white; font-family: 'Segoe UI', Tahoma, sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        :root { --school-blue: #003366; --gold: #FFD700; }
+        body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
-        .logo-img { height: 8vh; width: auto; object-fit: contain; }
+        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); }
+        .logo-img { height: 8vh; }
         
-        #weather-box { width: 30%; font-size: 1.4rem; font-weight: bold; }
         #clock-container { text-align: center; flex-grow: 1; }
-        #clock { font-size: 3.5rem; font-weight: bold; line-height: 1; }
-        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; margin-top: 5px; }
+        #clock { font-size: 3.5rem; font-weight: bold; }
+        #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
-        #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
-        #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width 0.7s ease-in-out; }
-        #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
+        #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; }
+        #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width 0.7s; }
+        #sidebar { width: 0%; background: #121212; opacity: 0; overflow-y: auto; transition: all 0.7s; border-left: 0px solid var(--gold); }
+        
+        /* Bell Transition Mode */
+        .bell-active #visuals { width: 50%; }
+        .bell-active #sidebar { width: 50%; opacity: 1; padding: 20px; border-left: 5px solid var(--gold); }
 
-        /* Sidebar: All Classes List */
-        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; overflow-y: auto; transition: all 0.7s ease-in-out; border-left: 0px solid var(--gold); }
-        .bell-active #visuals { width: 55%; }
-        .bell-active #sidebar { width: 45%; padding: 20px; opacity: 1; border-left: 5px solid var(--gold); }
+        .sched-row { display: flex; padding: 12px; border-bottom: 1px solid #333; background: #1a1a1a; margin-bottom: 8px; border-radius: 5px; }
+        .grade-label { width: 70px; font-size: 1.8rem; font-weight: bold; color: var(--gold); border-right: 2px solid var(--school-blue); margin-right: 15px; }
+        .subject-info { flex-grow: 1; }
+        .sub-text { font-size: 1.3rem; font-weight: bold; display: block; }
+        .room-text { font-size: 1rem; color: #bbb; }
 
-        .sched-row { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #333; margin-bottom: 5px; background: #1a1a1a; border-radius: 4px; }
-        .grade-box { width: 60px; font-weight: bold; font-size: 1.4rem; color: var(--gold); border-right: 2px solid var(--school-blue); margin-right: 15px; }
-        .info-box { flex-grow: 1; }
-        .subject-text { font-size: 1.2rem; font-weight: bold; display: block; }
-        .room-teacher { font-size: 0.9rem; color: #aaa; text-transform: uppercase; }
-
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); flex-shrink: 0; }
-        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 35s linear infinite; }
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
+        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll 30s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="display: flex; align-items: center; width: 35%;">
-            <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img" style="margin-right: 15px;">
-            <div id="weather-box"><span id="w-temp">Loading...</span></div>
-        </div>
+        <div style="width: 30%;"><img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img"></div>
         <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
-        <div style="width: 35%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
+        <div style="width: 30%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
     </div>
 
     <div id="main-area">
         <div id="visuals"></div>
-        <div id="sidebar">
-            <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">CLASS LOCATIONS</h2>
-            <div id="schedule-list"></div>
-        </div>
+        <div id="sidebar"><h2 style="color:var(--gold); text-align:center;">CURRENT CLASS LOCATIONS</h2><div id="list"></div></div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">LOADING TICKER...</div></div>
+    <div id="ticker"><div id="ticker-text">CONNECTING TO SYSTEM...</div></div>
 
     <script>
-        const API_URL = "PASTE_YOUR_NEW_DEPLOYED_URL_HERE"; 
+        const API_URL = "PASTE_YOUR_NEW_WEB_APP_URL_HERE";
         let mediaItems = [];
         let mediaIdx = 0;
 
-        async function fetchWeather() {
-            try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true&temperature_unit=fahrenheit');
-                const data = await res.json();
-                document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F NYC";
-            } catch (e) { document.getElementById('w-temp').innerText = "---°F"; }
-        }
-
-   function updateTime() {
+        function updateTime() {
             const now = new Date();
-            // Ensure we are using NYC time for the schedule calculation
-            const nycTime = new Date(now.toLocaleString("en-US", {timeZone: "America/New_York"}));
+            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+            document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday:'long', month:'short', day:'numeric'});
             
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
-            
-            const hours = nycTime.getHours();
-            const mins = nycTime.getMinutes();
-            const timeNum = hours * 100 + mins;
-
-            // Updated Bell Times - Expanded to 7 minutes to ensure visibility
+            const timeNum = now.getHours() * 100 + now.getMinutes();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
+            // Sidebar shows if within 7 minutes of a bell
             const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 7));
-            
-            // Apply the class to trigger the CSS transition
             document.getElementById('main-area').className = isBell ? "bell-active" : "";
         }
 
         async function updateData() {
             try {
                 const res = await fetch(API_URL);
-                if (!res.ok) throw new Error("Network response was not ok");
                 const data = await res.json();
-                
-                // Update Colors and Ticker
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
-                // Populate Sidebar
-                const list = document.getElementById('schedule-list');
-                if (data.allSchedules && data.allSchedules.length > 0) {
-                    list.innerHTML = ''; 
-                    data.allSchedules.forEach(item => {
-                        const row = document.createElement('div');
-                        row.className = 'sched-row';
-                        row.innerHTML = `
-                            <div class="grade-box">${item.class}</div>
-                            <div class="info-box">
-                                <span class="subject-text">${item.subject}</span>
-                                <span class="room-teacher">Room ${item.room} • ${item.teacher}</span>
-                            </div>
-                        `;
-                        list.appendChild(row);
-                    });
-                }
-                
+                const list = document.getElementById('list');
+                list.innerHTML = '';
+                data.allSchedules.forEach(item => {
+                    list.innerHTML += `<div class="sched-row">
+                        <div class="grade-label">${item.class}</div>
+                        <div class="subject-info">
+                            <span class="sub-text">${item.subject}</span>
+                            <span class="room-text">RM: ${item.room} • ${item.teacher}</span>
+                        </div>
+                    </div>`;
+                });
                 mediaItems = data.media;
-            } catch(e) { 
-                console.error("Data Load Error:", e);
-                // Fallback ticker if data fails
-                document.getElementById('ticker-text').innerText = "OFFLINE - CHECKING CONNECTION...";
-            }
+            } catch(e) { document.getElementById('ticker-text').innerText = "OFFLINE - CHECKING CONNECTION..."; }
         }
 
         function playMedia() {
             const stage = document.getElementById('visuals');
-            if (!mediaItems || mediaItems.length === 0) return;
+            if (!mediaItems.length) return;
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
 
             if (item.type === 'video') {
                 const vid = document.createElement('video');
-                vid.style.width = "100%"; vid.style.height = "100%";
-                vid.muted = true; vid.autoplay = true; 
+                vid.style.width = vid.style.height = "100%";
+                vid.muted = true; vid.autoplay = true;
                 vid.setAttribute('playsinline', 'true');
-                vid.setAttribute('webkit-playsinline', 'true');
-                vid.src = `https://drive.google.com/uc?export=download&id=${item.id}&v=${new Date().getTime()}`;
+                vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
-                vid.play().catch(e => { console.log("Blocked:", e); });
+                vid.play().catch(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); });
             } else {
                 const img = new Image();
                 img.src = `https://drive.google.com/thumbnail?id=${item.id}&sz=w1920`;
-                img.onload = () => {
-                    stage.appendChild(img);
-                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, 6000);
-                };
-                img.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                img.style.width = img.style.height = "100%";
+                img.style.objectFit = "contain";
+                stage.appendChild(img);
+                setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, 7000);
             }
         }
 
         setInterval(updateTime, 1000);
-        setInterval(updateData, 60000); 
-        setInterval(fetchWeather, 600000);
+        setInterval(updateData, 60000);
         updateData().then(() => playMedia());
         updateTime();
-        fetchWeather();
     </script>
 </body>
 </html>
