@@ -86,37 +86,45 @@
             isBellTime = isBell;
         }
 
-        async function updateData() {
-            try {
-                const res = await fetch(API_URL);
-                const data = await res.json();
-                
-                // Update CSS Variables from Spreadsheet
-                document.documentElement.style.setProperty('--school-blue', data.settings.primary);
-                document.documentElement.style.setProperty('--gold', data.settings.accent);
-                document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
-                document.documentElement.style.setProperty('--sidebar-speed', data.settings.sidebarSpeed + 's');
-                
-                document.getElementById('ticker-text').innerText = data.settings.ticker;
-                imgDuration = data.settings.imageDuration * 1000;
+     async function updateData() {
+    try {
+        // Force a fresh fetch by adding a timestamp
+        const cacheBuster = API_URL + "?t=" + new Date().getTime();
+        const res = await fetch(cacheBuster);
+        const data = await res.json();
+        
+        // Apply Settings from Column C
+        document.documentElement.style.setProperty('--school-blue', data.settings.primary);
+        document.documentElement.style.setProperty('--gold', data.settings.accent);
+        document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
+        document.documentElement.style.setProperty('--sidebar-speed', data.settings.sidebarSpeed + 's');
+        
+        document.getElementById('ticker-text').innerText = data.settings.ticker;
+        imgDuration = data.settings.imageDuration * 1000;
 
-                const sidebar = document.getElementById('sidebar');
-                if (isBellTime) {
-                    let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:1.8rem;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
-                    data.allSchedules.forEach(s => {
-                        html += `<tr><td class="grade-col">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td style="color:#bbb; font-size:0.9rem;">${s.teacher}</td></tr>`;
-                    });
-                    sidebar.innerHTML = html + '</table>';
-                } else {
-                    sidebar.innerHTML = `
-                        <div class="label">Rotation</div><div class="data">${data.rotatingSchedule.class}</div>
-                        <div class="label">Room</div><div class="data">${data.rotatingSchedule.room}</div>
-                        <div class="label">Subject</div><div class="data">${data.rotatingSchedule.subject}</div>
-                        <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
-                }
-                mediaItems = data.media;
-            } catch(e) { console.error("Sync Error"); }
+        // Dynamic Refresh Rate (0.5 mins = 30 seconds)
+        const refreshMs = Math.max(0.2, data.settings.refreshRate) * 60000;
+        clearInterval(window.refreshInterval);
+        window.refreshInterval = setInterval(updateData, refreshMs);
+
+        // Render Sidebar
+        const sidebar = document.getElementById('sidebar');
+        if (isBellTime) {
+            let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:1.8rem;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
+            data.allSchedules.forEach(s => {
+                html += `<tr><td class="grade-col">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td style="color:#bbb; font-size:0.9rem;">${s.teacher}</td></tr>`;
+            });
+            sidebar.innerHTML = html + '</table>';
+        } else {
+            sidebar.innerHTML = `
+                <div class="label">Rotation</div><div class="data">${data.rotatingSchedule.class}</div>
+                <div class="label">Room</div><div class="data">${data.rotatingSchedule.room}</div>
+                <div class="label">Subject</div><div class="data">${data.rotatingSchedule.subject}</div>
+                <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
         }
+        mediaItems = data.media;
+    } catch(e) { console.error("Sync Error", e); }
+}
 
         function playMedia() {
             const stage = document.getElementById('visuals');
