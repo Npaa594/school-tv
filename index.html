@@ -25,27 +25,9 @@
         .label { color: var(--gold); font-size: 1.2rem; text-transform: uppercase; margin-top: 15px; }
         .data { font-size: 2.8rem; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 5px; }
 
-       .sched-table { 
-    width: 100%; 
-    border-collapse: collapse; 
-    margin-top: 5px; 
-}
-.sched-table th { 
-    text-align: left; 
-    padding: 5px; 
-    font-size: 0.8rem; 
-}
-.sched-table td { 
-    padding: 6px 4px; 
-    border-bottom: 1px solid #222; 
-    font-size: 0.95rem; 
-    vertical-align: middle;
-}
-.grade-col { 
-    color: var(--gold); 
-    font-weight: bold; 
-    width: 15%; 
-}
+        .sched-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .sched-table th { text-align: left; padding: 5px; font-size: 0.8rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .sched-table td { padding: 6px 4px; border-bottom: 1px solid #222; font-size: 0.95rem; vertical-align: middle; }
         .grade-col { color: var(--gold); font-weight: bold; width: 60px; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
@@ -107,30 +89,13 @@
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
                 const sidebar = document.getElementById('sidebar');
-               if (isBellTime) {
-    let html = `
-        <h2 style="color:var(--gold); text-align:center; margin-top:0; font-size:1.8rem;">CLASS LOCATIONS</h2>
-        <table class="sched-table">
-            <tr style="color:var(--gold); font-size:0.9rem; border-bottom:2px solid var(--gold);">
-                <th>CLASS</th>
-                <th>SUBJECT</th>
-                <th>ROOM</th>
-                <th>TEACHER</th>
-            </tr>`;
-    
-    data.allSchedules.forEach(s => {
-        html += `
-            <tr>
-                <td class="grade-col">${s.class}</td>
-                <td style="font-size:1rem;">${s.subject}</td>
-                <td style="font-weight:bold;">${s.room}</td>
-                <td style="color:#bbb; font-size:0.9rem;">${s.teacher}</td>
-            </tr>`;
-    });
-    
-    sidebar.innerHTML = html + '</table>';
-    setTimeout(updateData, 8000); 
-}
+                if (isBellTime) {
+                    let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:1.8rem;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
+                    data.allSchedules.forEach(s => {
+                        html += `<tr><td class="grade-col">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td style="color:#bbb; font-size:0.9rem;">${s.teacher}</td></tr>`;
+                    });
+                    sidebar.innerHTML = html + '</table>';
+                    setTimeout(updateData, 8000); 
                 } else {
                     sidebar.innerHTML = `
                         <div class="label">Rotation</div><div class="data">${data.rotatingSchedule.class}</div>
@@ -148,7 +113,6 @@
                 setTimeout(playMedia, 3000);
                 return;
             }
-            
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
 
@@ -164,18 +128,14 @@
                 vid.play();
             } else {
                 const img = new Image();
-                // CHROME FIX: Bypasses standard Drive CORS blocks
-                img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
+                img.src = `https://lh3.googleusercontent.com/d/$${item.id}`;
                 img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
                 img.onload = () => {
                     stage.appendChild(img);
                     setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, 15000);
                 };
-                img.onerror = () => {
-                    // Fallback URL if GoogleUserContent fails
-                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
-                };
+                img.onerror = () => { img.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
             }
         }
 
