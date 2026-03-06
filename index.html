@@ -17,39 +17,37 @@
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; position: relative; flex-direction: row; }
         
+        /* Visuals shrink to 40% when sidebar is active */
         #visuals, #live-container { width: 100%; height: 100%; position: relative; flex-grow: 1; transition: width var(--sidebar-speed) ease-in-out; }
-        
-        /* Fade-in Setup */
-        #visuals img, #visuals video { 
-            width: 100%; height: 100%; object-fit: contain; 
-            opacity: 0; transition: opacity 1s ease-in-out; 
-        }
+        #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; opacity: 0; transition: opacity 1s ease-in-out; }
         .fade-active { opacity: 1 !important; }
 
+        /* Sidebar takes 60% when active */
         #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow-y: auto; z-index: 10; flex-shrink: 0; }
         
-        .bell-active #visuals, .bell-active #live-container { width: 50%; }
-        .bell-active #sidebar { width: 50%; padding: 20px; opacity: 1; border-left: 5px solid var(--gold); }
+        .bell-active #visuals, .bell-active #live-container { width: 40%; }
+        .bell-active #sidebar { width: 60%; padding: 20px; opacity: 1; border-left: 5px solid var(--gold); }
 
+        /* Table Styling for 3-Line Vertical Stack */
         .sched-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: white; table-layout: fixed; }
-        .sched-table th { text-align: left; padding: 10px; font-size: 1rem; color: var(--gold); border-bottom: 2px solid var(--gold); text-transform: uppercase; }
-        .sched-table td { padding: 15px 10px; border-bottom: 1px solid #333; vertical-align: top; }
+        .sched-table th { text-align: left; padding: 10px; font-size: 1.1rem; color: var(--gold); border-bottom: 2px solid var(--gold); text-transform: uppercase; }
+        .sched-table td { padding: 12px 10px; border-bottom: 1px solid #333; vertical-align: top; line-height: 1.4; }
 
-        .room-line { color: var(--gold); font-weight: bold; font-size: 1.4rem; display: block; }
-        .subject-line { font-size: 1.2rem; display: block; margin: 4px 0; }
-        .teacher-line { font-size: 1rem; color: #BBB; display: block; }
+        .room-line { color: var(--gold); font-weight: bold; font-size: 1.6rem; display: block; }
+        .subject-line { font-size: 1.3rem; font-weight: 500; display: block; margin: 2px 0; color: #fff; }
+        .teacher-line { font-size: 1.1rem; color: #aaa; display: block; font-style: italic; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); z-index: 2000; }
         #ticker-text { white-space: nowrap; font-size: 2.8rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         .alert-active { background: var(--alert-red) !important; }
 
+        /* BIRTHDAY & EMERGENCY OVERLAYS (NO CHANGES) */
         #birthday-overlay { display: none; position: absolute; width: 100%; height: 100%; background: linear-gradient(45deg, #FF69B4, #87CEEB); z-index: 1500; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         .confetti { position: absolute; width: 15px; height: 15px; top: -20px; animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
         .bday-text { font-size: 5rem; font-weight: 900; animation: bounce 1s infinite; text-shadow: 4px 4px 10px rgba(0,0,0,0.3); }
         @keyframes bounce { 50% { transform: translateY(-20px); } }
-
         #emergency-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FF0000; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; animation: emergencyFlash 1s infinite; }
         @keyframes emergencyFlash { 0%, 100% { background: #FF0000; } 50% { background: #AA0000; } }
     </style>
@@ -171,7 +169,6 @@
                     if (timeNum === 800) { currentSlot = "morning"; bdayDuration = 30000; showBday = true; }
                     else if (timeNum === 1111) { currentSlot = "lunch"; bdayDuration = 120000; showBday = true; }
                     else if (timeNum === 1420) { currentSlot = "dismissal"; bdayDuration = 60000; showBday = true; }
-
                     if (showBday && lastBirthdayTrigger !== currentSlot) {
                         document.getElementById('bday-names').innerText = data.birthdays.join(" & ");
                         bdayOverlay.style.display = "flex";
@@ -188,12 +185,19 @@
                 globalTickerText = data.settings.ticker;
                 mediaItems = data.media;
 
-                // SIDEBAR
+                // SIDEBAR RESTRUCTURED FOR 60% WIDTH & 3-LINE VERTICAL STACK
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
-                    let html = `<h2 style="color:var(--gold); text-align:center; font-size:2rem; margin-bottom:10px;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th style="width:120px;">CLASS</th><th>LOCATION DETAILS</th></tr>`;
+                    let html = `<h2 style="color:var(--gold); text-align:center; font-size:2.2rem; margin-bottom:15px; border-bottom: 3px solid var(--gold); padding-bottom: 10px;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th style="width:100px;">CLASS</th><th>LOCATION DETAILS</th></tr>`;
                     data.allSchedules.forEach(s => {
-                        html += `<tr><td style="color:var(--gold); font-weight:bold; font-size:1.5rem;">${s.class}</td><td><span class="room-line">ROOM: ${s.room}</span><span class="subject-line">${s.subject}</span><span class="teacher-line">TEACHER: ${s.teacher}</span></td></tr>`;
+                        html += `<tr>
+                            <td style="color:var(--gold); font-weight:bold; font-size:1.8rem;">${s.class}</td>
+                            <td>
+                                <span class="room-line">${s.room}</span>
+                                <span class="subject-line">${s.subject}</span>
+                                <span class="teacher-line">${s.teacher}</span>
+                            </td>
+                        </tr>`;
                     });
                     sidebar.innerHTML = html + '</table>';
                 }
@@ -204,17 +208,13 @@
             const stage = document.getElementById('visuals');
             if (!mediaItems || mediaItems.length === 0) { setTimeout(playMedia, 3000); return; }
             const item = mediaItems[mediaIdx];
-
             const el = item.type === 'video' ? document.createElement('video') : new Image();
             
             if (item.type === 'video') {
                 el.muted = true; el.autoplay = true; el.playsInline = true;
                 el.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
                 el.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                el.onloadeddata = () => { 
-                    stage.innerHTML = ''; stage.appendChild(el); 
-                    setTimeout(() => el.classList.add('fade-active'), 50); 
-                };
+                el.onloadeddata = () => { stage.innerHTML = ''; stage.appendChild(el); setTimeout(() => el.classList.add('fade-active'), 50); };
             } else {
                 el.src = `https://drive.google.com/thumbnail?sz=w1920&id=${item.id}`;
                 el.onload = () => {
