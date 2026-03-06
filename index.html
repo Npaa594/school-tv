@@ -15,24 +15,31 @@
         #clock { font-size: 3.5rem; font-weight: bold; }
         #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
-        #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; position: relative; }
-        #visuals, #live-container { width: 100%; height: 100%; position: absolute; top:0; left:0; }
+        #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; position: relative; flex-direction: row; }
+        
+        #visuals, #live-container { width: 100%; height: 100%; position: relative; flex-grow: 1; transition: width var(--sidebar-speed) ease-in-out; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; }
 
-        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; z-index: 10; }
+        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow-y: auto; z-index: 10; flex-shrink: 0; }
+        
+        /* Updated to 50% split */
         .bell-active #visuals, .bell-active #live-container { width: 50%; }
-        .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
+        .bell-active #sidebar { width: 50%; padding: 20px; opacity: 1; border-left: 5px solid var(--gold); }
 
-        .sched-table { width: 100%; border-collapse: collapse; margin-top: 5px; color: white; }
-        .sched-table th { text-align: left; padding: 8px; font-size: 0.9rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
-        .sched-table td { padding: 10px 8px; border-bottom: 1px solid #333; font-size: 1.1rem; }
+        .sched-table { width: 100%; border-collapse: collapse; margin-top: 10px; color: white; table-layout: fixed; }
+        .sched-table th { text-align: left; padding: 10px; font-size: 1rem; color: var(--gold); border-bottom: 2px solid var(--gold); text-transform: uppercase; }
+        .sched-table td { padding: 15px 10px; border-bottom: 1px solid #333; vertical-align: top; }
+
+        /* Specific Line Styling */
+        .room-line { color: var(--gold); font-weight: bold; font-size: 1.4rem; display: block; }
+        .subject-line { font-size: 1.2rem; display: block; margin: 4px 0; }
+        .teacher-line { font-size: 1rem; color: #BBB; display: block; }
 
         #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); z-index: 2000; }
         #ticker-text { white-space: nowrap; font-size: 2.8rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         .alert-active { background: var(--alert-red) !important; }
 
-        /* BIRTHDAY & CONFETTI */
         #birthday-overlay { display: none; position: absolute; width: 100%; height: 100%; background: linear-gradient(45deg, #FF69B4, #87CEEB); z-index: 1500; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
         .confetti { position: absolute; width: 15px; height: 15px; top: -20px; animation: fall linear infinite; }
         @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
@@ -79,7 +86,7 @@
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec"; 
         let mediaItems = []; let mediaIdx = 0; let isBellTime = false;
         let imgDuration = 5000; let globalTickerText = "";
-        let birthdayShownToday = false;
+        let lastBirthdayTrigger = ""; 
 
         async function fetchWeather() {
             try {
@@ -91,13 +98,14 @@
 
         function createConfetti() {
             const container = document.getElementById('birthday-overlay');
-            for(let i=0; i<30; i++) {
+            container.querySelectorAll('.confetti').forEach(c => c.remove());
+            for(let i=0; i<40; i++) {
                 const c = document.createElement('div');
                 c.className = 'confetti';
                 c.style.left = Math.random() * 100 + 'vw';
                 c.style.backgroundColor = ['#FFD700','#FF1493','#00BFFF','#32CD32'][Math.floor(Math.random()*4)];
                 c.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                c.style.animationDelay = (Math.random() * 5) + 's';
+                c.style.animationDelay = (Math.random() * 2) + 's';
                 container.appendChild(c);
             }
         }
@@ -137,8 +145,9 @@
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
+                const now = new Date();
+                const timeNum = now.getHours() * 100 + now.getMinutes();
                 
-                // 1. EMERGENCY
                 const emerOverlay = document.getElementById('emergency-overlay');
                 if (data.settings.mode === "EMERGENCY") {
                     emerOverlay.style.display = "flex";
@@ -146,7 +155,6 @@
                     return;
                 } else { emerOverlay.style.display = "none"; }
 
-                // 2. LIVE STREAM
                 const liveBox = document.getElementById('live-container');
                 const visuals = document.getElementById('visuals');
                 if (data.settings.mode === "LIVE" && data.liveUrl) {
@@ -159,29 +167,46 @@
                     liveBox.innerHTML = "";
                 }
 
-                // 3. BIRTHDAYS
-                if (data.birthdays && data.birthdays.length > 0 && !birthdayShownToday) {
-                    const bdayOverlay = document.getElementById('birthday-overlay');
-                    document.getElementById('bday-names').innerText = data.birthdays.join(" & ");
-                    bdayOverlay.style.display = "flex";
-                    createConfetti();
-                    birthdayShownToday = true;
-                    setTimeout(() => { bdayOverlay.style.display = "none"; }, 15000);
-                }
+                // BIRTHDAYS
+                const bdayOverlay = document.getElementById('birthday-overlay');
+                let showBday = false;
+                let bdayDuration = 0;
+                let currentSlot = "";
 
-                // Global Settings
+                if (data.birthdays && data.birthdays.length > 0) {
+                    if (timeNum === 800) { currentSlot = "morning"; bdayDuration = 30000; showBday = true; }
+                    else if (timeNum === 1111) { currentSlot = "lunch"; bdayDuration = 120000; showBday = true; }
+                    else if (timeNum === 1420) { currentSlot = "dismissal"; bdayDuration = 60000; showBday = true; }
+
+                    if (showBday && lastBirthdayTrigger !== currentSlot) {
+                        document.getElementById('bday-names').innerText = data.birthdays.join(" & ");
+                        bdayOverlay.style.display = "flex";
+                        createConfetti();
+                        lastBirthdayTrigger = currentSlot;
+                        setTimeout(() => { bdayOverlay.style.display = "none"; }, bdayDuration);
+                    }
+                }
+                if (timeNum === 0) lastBirthdayTrigger = "";
+
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 imgDuration = data.settings.imageDuration * 1000;
                 globalTickerText = data.settings.ticker;
                 mediaItems = data.media;
 
-                // Sidebar
+                // SIDEBAR RESTRUCTURED FOR 3 CLEAR LINES
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
-                    let html = `<h2 style="color:var(--gold); text-align:center; font-size:2rem; margin:0;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
+                    let html = `<h2 style="color:var(--gold); text-align:center; font-size:2rem; margin-bottom:10px;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th style="width:120px;">CLASS</th><th>LOCATION DETAILS</th></tr>`;
                     data.allSchedules.forEach(s => {
-                        html += `<tr><td style="color:var(--gold); font-weight:bold;">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td>${s.teacher}</td></tr>`;
+                        html += `<tr>
+                            <td style="color:var(--gold); font-weight:bold; font-size:1.5rem;">${s.class}</td>
+                            <td>
+                                <span class="room-line">ROOM: ${s.room}</span>
+                                <span class="subject-line">${s.subject}</span>
+                                <span class="teacher-line">TEACHER: ${s.teacher}</span>
+                            </td>
+                        </tr>`;
                     });
                     sidebar.innerHTML = html + '</table>';
                 }
