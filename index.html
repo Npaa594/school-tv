@@ -9,11 +9,11 @@
             --gold: #FFD700;
             --dark: #121212;
             --ticker-speed: 110s;
-            --sidebar-speed: 2.5s;
+            --sidebar-speed: 0.8s; /* Snappier transition */
         }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; transition: background 0.5s; }
+        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
         .logo-img { height: 8vh; width: auto; }
         
         #clock-container { text-align: center; flex-grow: 1; }
@@ -21,21 +21,23 @@
         #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
+        
+        /* Visuals now default to 100% width */
         #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width var(--sidebar-speed) ease-in-out; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
+        /* Sidebar is hidden (0% width) by default */
         #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
+        
+        /* Bell Mode: Media shrinks to 50%, Sidebar takes 50% */
         .bell-active #visuals { width: 50%; }
         .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
 
-        .label { color: var(--gold); font-size: 1.2rem; text-transform: uppercase; margin-top: 15px; }
-        .data { font-size: 2.8rem; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 5px; }
-
         .sched-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-        .sched-table th { text-align: left; padding: 5px; font-size: 0.8rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
-        .sched-table td { padding: 6px 4px; border-bottom: 1px solid #222; font-size: 0.95rem; }
+        .sched-table th { text-align: left; padding: 8px; font-size: 0.9rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
+        .sched-table td { padding: 10px 8px; border-bottom: 1px solid #333; font-size: 1.1rem; }
 
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); transition: background 0.5s; }
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
         #ticker-text { white-space: nowrap; font-size: 2.8rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
@@ -59,7 +61,7 @@
     <div id="ticker"><div id="ticker-text">SYNCING DATA...</div></div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec"; 
         let mediaItems = [];
         let mediaIdx = 0;
         let isBellTime = false;
@@ -67,7 +69,6 @@
 
         async function fetchWeather() {
             try {
-                // Specific coordinates for 10456 (Bronx)
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.83&longitude=-73.90&current_weather=true&temperature_unit=fahrenheit');
                 const data = await res.json();
                 document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F BRONX";
@@ -81,6 +82,8 @@
             
             const timeNum = now.getHours() * 100 + now.getMinutes();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
+            
+            // Check if we are within the 5-minute window of a bell
             isBellTime = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
             document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
         }
@@ -93,37 +96,30 @@
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
-                document.documentElement.style.setProperty('--sidebar-speed', data.settings.sidebarSpeed + 's');
                 imgDuration = data.settings.imageDuration * 1000;
 
                 document.getElementById('ticker-text').innerText = data.settings.ticker;
 
                 const sidebar = document.getElementById('sidebar');
+                
+                // ONLY build the schedule if it is Bell Time
                 if (isBellTime) {
-                    let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:1.8rem;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
+                    let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:2rem; padding-bottom:10px;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
                     data.allSchedules.forEach(s => {
                         html += `<tr><td style="color:var(--gold); font-weight:bold;">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td>${s.teacher}</td></tr>`;
                     });
                     sidebar.innerHTML = html + '</table>';
                 } else {
-                    sidebar.innerHTML = `
-                        <div class="label">Rotation</div><div class="data">${data.rotatingSchedule.class}</div>
-                        <div class="label">Room</div><div class="data">${data.rotatingSchedule.room}</div>
-                        <div class="label">Subject</div><div class="data">${data.rotatingSchedule.subject}</div>
-                        <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
+                    sidebar.innerHTML = ''; // Keep it empty so nobody stands and waits
                 }
+                
                 mediaItems = data.media;
             } catch(e) { console.log("Sync error"); }
         }
 
-   function playMedia() {
+        function playMedia() {
             const stage = document.getElementById('visuals');
-            if (!mediaItems || mediaItems.length === 0) { 
-                console.log("No media found yet...");
-                setTimeout(playMedia, 3000); 
-                return; 
-            }
-            
+            if (mediaItems.length === 0) { setTimeout(playMedia, 3000); return; }
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
 
@@ -131,35 +127,24 @@
                 const vid = document.createElement('video');
                 vid.style.width = vid.style.height = "100%";
                 vid.muted = true; vid.autoplay = true;
-                // Direct download link for video
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
             } else {
                 const img = new Image();
-                // Most stable link for Google Drive images
-                img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
+                img.src = `https://lh3.googleusercontent.com/d/$${item.id}`;
                 img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
-                
                 img.onload = () => {
                     stage.appendChild(img);
-                    setTimeout(() => { 
-                        mediaIdx = (mediaIdx + 1) % mediaItems.length; 
-                        playMedia(); 
-                    }, imgDuration);
+                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, imgDuration);
                 };
-                
-                // Fallback if the first link fails
-                img.onerror = () => { 
-                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
-                };
+                img.onerror = () => { img.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
             }
         }
 
         setInterval(updateTime, 1000);
-        setInterval(updateData, 30000); // Syncs with Refresh Rate from B9 (0.5m)
+        setInterval(updateData, 30000); 
         setInterval(fetchWeather, 600000);
         updateData().then(() => setTimeout(playMedia, 1500));
         updateTime();
