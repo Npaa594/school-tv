@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>School Signage</title>
+    <title>New Pathways Signage</title>
     <style>
         :root {
             --school-blue: #003366;
@@ -12,112 +12,97 @@
             --sidebar-speed: 2.5s;
         }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
-       
-        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
+        
+        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; transition: background 0.5s; }
         .logo-img { height: 8vh; width: auto; }
-       
+        
         #clock-container { text-align: center; flex-grow: 1; }
         #clock { font-size: 3.5rem; font-weight: bold; }
         #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
-
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
         #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width var(--sidebar-speed) ease-in-out; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
-
         #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
         .bell-active #visuals { width: 50%; }
         .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
 
-
         .label { color: var(--gold); font-size: 1.2rem; text-transform: uppercase; margin-top: 15px; }
         .data { font-size: 2.8rem; font-weight: bold; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 5px; }
 
-
         .sched-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
         .sched-table th { text-align: left; padding: 5px; font-size: 0.8rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
-        .sched-table td { padding: 6px 4px; border-bottom: 1px solid #222; font-size: 0.95rem; vertical-align: middle; }
-        .grade-col { color: var(--gold); font-weight: bold; width: 60px; }
+        .sched-table td { padding: 6px 4px; border-bottom: 1px solid #222; font-size: 0.95rem; }
 
-
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
-        #ticker-text { white-space: nowrap; font-size: 2.5rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); transition: background 0.5s; }
+        #ticker-text { white-space: nowrap; font-size: 2.8rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     </style>
 </head>
 <body>
 
-
     <div id="header">
-        <div style="width: 35%; display: flex; align-items: center;">
+        <div style="width: 30%; display: flex; align-items: center;">
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img">
-            <div id="w-temp" style="margin-left:20px; font-size: 1.4rem; font-weight: bold;">Loading...</div>
+            <div id="w-temp" style="margin-left:20px; font-size: 1.4rem; font-weight: bold; color: white;">...</div>
         </div>
         <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
-        <div style="width: 35%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
+        <div style="width: 30%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
     </div>
-
 
     <div id="main-area">
         <div id="visuals"></div>
         <div id="sidebar"></div>
     </div>
 
-
-    <div id="ticker"><div id="ticker-text">CONNECTING TO DRIVE...</div></div>
-
+    <div id="ticker"><div id="ticker-text">SYNCING DATA...</div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec";
         let mediaItems = [];
         let mediaIdx = 0;
         let isBellTime = false;
-        let imgDuration = 15000;
-
+        let imgDuration = 5000;
 
         async function fetchWeather() {
             try {
-                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.71&longitude=-74.01&current_weather=true&temperature_unit=fahrenheit');
+                // Specific coordinates for 10456 (Bronx)
+                const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.83&longitude=-73.90&current_weather=true&temperature_unit=fahrenheit');
                 const data = await res.json();
-                document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F NYC";
-            } catch (e) { document.getElementById('w-temp').innerText = "NYC"; }
+                document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F BRONX";
+            } catch (e) { document.getElementById('w-temp').innerText = "10456"; }
         }
-
 
         function updateTime() {
             const now = new Date();
             document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
-           
+            
             const timeNum = now.getHours() * 100 + now.getMinutes();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
-            const isBell = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
-            document.getElementById('main-area').className = isBell ? "bell-active" : "";
-            isBellTime = isBell;
+            isBellTime = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
+            document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
         }
-
 
         async function updateData() {
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-               
-                // Update CSS Variables from Spreadsheet
+                
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
                 document.documentElement.style.setProperty('--sidebar-speed', data.settings.sidebarSpeed + 's');
-               
-                document.getElementById('ticker-text').innerText = data.settings.ticker;
                 imgDuration = data.settings.imageDuration * 1000;
 
+                document.getElementById('ticker-text').innerText = data.settings.ticker;
 
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
                     let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:1.8rem;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
                     data.allSchedules.forEach(s => {
-                        html += `<tr><td class="grade-col">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td style="color:#bbb; font-size:0.9rem;">${s.teacher}</td></tr>`;
+                        html += `<tr><td style="color:var(--gold); font-weight:bold;">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td>${s.teacher}</td></tr>`;
                     });
                     sidebar.innerHTML = html + '</table>';
                 } else {
@@ -128,30 +113,22 @@
                         <div class="label">Teacher</div><div class="data">${data.rotatingSchedule.teacher}</div>`;
                 }
                 mediaItems = data.media;
-            } catch(e) { console.error("Sync Error"); }
+            } catch(e) { console.log("Sync error"); }
         }
-
 
         function playMedia() {
             const stage = document.getElementById('visuals');
-            if (!mediaItems || mediaItems.length === 0) {
-                setTimeout(playMedia, 3000);
-                return;
-            }
+            if (mediaItems.length === 0) { setTimeout(playMedia, 3000); return; }
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
-
 
             if (item.type === 'video') {
                 const vid = document.createElement('video');
                 vid.style.width = vid.style.height = "100%";
                 vid.muted = true; vid.autoplay = true;
-                vid.setAttribute('playsinline', 'true');
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
-                vid.play();
             } else {
                 const img = new Image();
                 img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
@@ -165,11 +142,10 @@
             }
         }
 
-
         setInterval(updateTime, 1000);
-        setInterval(updateData, 60000);
+        setInterval(updateData, 30000); // Syncs with Refresh Rate from B9 (0.5m)
         setInterval(fetchWeather, 600000);
-        updateData().then(() => setTimeout(playMedia, 2000));
+        updateData().then(() => setTimeout(playMedia, 1500));
         updateTime();
         fetchWeather();
     </script>
