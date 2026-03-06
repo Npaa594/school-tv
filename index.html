@@ -8,8 +8,9 @@
             --school-blue: #003366;
             --gold: #FFD700;
             --dark: #121212;
+            --alert-red: #CC0000;
             --ticker-speed: 110s;
-            --sidebar-speed: 0.8s; /* Snappier transition */
+            --sidebar-speed: 0.8s;
         }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
@@ -21,15 +22,10 @@
         #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
         #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
-        
-        /* Visuals now default to 100% width */
         #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width var(--sidebar-speed) ease-in-out; }
         #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
 
-        /* Sidebar is hidden (0% width) by default */
         #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
-        
-        /* Bell Mode: Media shrinks to 50%, Sidebar takes 50% */
         .bell-active #visuals { width: 50%; }
         .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
 
@@ -37,17 +33,23 @@
         .sched-table th { text-align: left; padding: 8px; font-size: 0.9rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
         .sched-table td { padding: 10px 8px; border-bottom: 1px solid #333; font-size: 1.1rem; }
 
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); }
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); transition: background 0.3s ease; }
         #ticker-text { white-space: nowrap; font-size: 2.8rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+        
+        .alert-active { background: var(--alert-red) !important; }
+        #countdown-box { color: var(--gold); font-weight: bold; font-size: 1.4rem; margin-left: 15px; display: none; }
     </style>
 </head>
 <body>
 
     <div id="header">
-        <div style="width: 30%; display: flex; align-items: center;">
+        <div style="width: 35%; display: flex; align-items: center;">
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img">
-            <div id="w-temp" style="margin-left:20px; font-size: 1.4rem; font-weight: bold; color: white;">...</div>
+            <div style="margin-left:20px;">
+                <div id="w-temp" style="font-size: 1.4rem; font-weight: bold;">...</div>
+                <div id="countdown-box"></div>
+            </div>
         </div>
         <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
         <div style="width: 30%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
@@ -58,20 +60,18 @@
         <div id="sidebar"></div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">SYNCING DATA...</div></div>
+    <div id="ticker"><div id="ticker-text">SYNCING...</div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec"; 
         let mediaItems = [];
         let mediaIdx = 0;
         let isBellTime = false;
-        let isWarningTime = false;
         let imgDuration = 5000;
         let globalTickerText = "";
 
         async function fetchWeather() {
             try {
-                // Coordinates for 10456 Bronx
                 const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=40.83&longitude=-73.90&current_weather=true&temperature_unit=fahrenheit');
                 const data = await res.json();
                 document.getElementById('w-temp').innerText = Math.round(data.current_weather.temperature) + "°F BRONX";
@@ -84,25 +84,31 @@
             document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
             
             const timeNum = now.getHours() * 100 + now.getMinutes();
+            const currentSeconds = now.getSeconds();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
             
-            // 1. Check for 1-minute Warning (Sidebar pops out, Ticker changes)
-            isWarningTime = bells.some(b => (timeNum === b - 1));
-            
-            // 2. Check for 5-minute Passing Period (Sidebar stays out, Ticker is normal)
+            const isWarning = bells.some(b => (timeNum === b - 1));
             const inPassing = bells.some(b => (timeNum >= b && timeNum < b + 5));
             
-            isBellTime = isWarningTime || inPassing;
+            isBellTime = isWarning || inPassing;
             document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
 
-            // 3. Update Ticker Text based on status
-            const tickerElement = document.getElementById('ticker-text');
-            if (isWarningTime) {
-                tickerElement.innerText = "⚡ NEXT PERIOD STARTS IN 1 MINUTE - PLEASE HEAD TO CLASS ⚡";
-                tickerElement.style.color = "var(--gold)";
+            const tickerBox = document.getElementById('ticker');
+            const tickerText = document.getElementById('ticker-text');
+            const countdownBox = document.getElementById('countdown-box');
+
+            if (isWarning) {
+                tickerBox.classList.add('alert-active');
+                tickerText.innerText = "🚨 NEXT PERIOD STARTS IN 1 MINUTE - PLEASE HEAD TO CLASS 🚨";
+                
+                // Countdown Logic
+                const secondsLeft = 60 - currentSeconds;
+                countdownBox.style.display = "block";
+                countdownBox.innerText = `⚠️ BELL IN ${secondsLeft}s`;
             } else {
-                tickerElement.innerText = globalTickerText;
-                tickerElement.style.color = "white";
+                tickerBox.classList.remove('alert-active');
+                tickerText.innerText = globalTickerText;
+                countdownBox.style.display = "none";
             }
         }
 
@@ -115,8 +121,6 @@
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
                 imgDuration = data.settings.imageDuration * 1000;
-
-                // Store the text from the Sheet so we can switch back to it
                 globalTickerText = data.settings.ticker;
 
                 const sidebar = document.getElementById('sidebar');
@@ -149,7 +153,6 @@
                 stage.appendChild(vid);
             } else {
                 const img = new Image();
-                // Using the most reliable Drive thumbnail link
                 img.src = `https://drive.google.com/thumbnail?sz=w1920&id=${item.id}`;
                 img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
