@@ -174,29 +174,62 @@
             } catch(e) { console.log("Sync error"); }
         }
 
-        function playMedia() {
+function playMedia() {
             const stage = document.getElementById('visuals');
-            if (!mediaItems || mediaItems.length === 0) { setTimeout(playMedia, 3000); return; }
+            
+            // 1. Safety Check: If no media is found yet, wait 3 seconds and try again
+            if (!mediaItems || mediaItems.length === 0) { 
+                console.log("Searching for media in Drive...");
+                setTimeout(playMedia, 3000); 
+                return; 
+            }
+
             const item = mediaItems[mediaIdx];
-            stage.innerHTML = '';
+            stage.innerHTML = ''; // Clear the current screen
 
             if (item.type === 'video') {
+                // VIDEO LOGIC
                 const vid = document.createElement('video');
-                vid.style.width = vid.style.height = "100%";
-                vid.muted = true; vid.autoplay = true;
+                vid.style.width = "100%";
+                vid.style.height = "100%";
+                vid.muted = true; 
+                vid.autoplay = true;
+                vid.playsInline = true;
+                // High-compatibility stream link
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
-                vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                
+                vid.onended = () => { 
+                    mediaIdx = (mediaIdx + 1) % mediaItems.length; 
+                    playMedia(); 
+                };
+                vid.onerror = () => { 
+                    console.error("Video failed to load, skipping...");
+                    mediaIdx = (mediaIdx + 1) % mediaItems.length; 
+                    playMedia(); 
+                };
                 stage.appendChild(vid);
             } else {
+                // IMAGE LOGIC
                 const img = new Image();
+                // We use the 'thumbnail' link because it is much faster and bypasses most security blocks
                 img.src = `https://drive.google.com/thumbnail?sz=w1920&id=${item.id}`;
-                img.style.width = img.style.height = "100%";
+                img.style.width = "100%";
+                img.style.height = "100%";
                 img.style.objectFit = "contain";
+                
                 img.onload = () => {
                     stage.appendChild(img);
-                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, imgDuration);
+                    // Use the duration set in your Google Sheet (Cell B8)
+                    setTimeout(() => { 
+                        mediaIdx = (mediaIdx + 1) % mediaItems.length; 
+                        playMedia(); 
+                    }, imgDuration);
                 };
-                img.onerror = () => { img.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
+                
+                img.onerror = () => { 
+                    console.error("Image failed, trying alternate link...");
+                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
+                };
             }
         }
 
