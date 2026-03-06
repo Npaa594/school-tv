@@ -38,7 +38,7 @@
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
         
         .alert-active { background: var(--alert-red) !important; }
-        #countdown-box { color: var(--gold); font-weight: bold; font-size: 1.4rem; margin-left: 15px; display: none; }
+        #countdown-box { color: var(--gold); font-weight: bold; font-size: 1.4rem; }
     </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img">
             <div style="margin-left:20px;">
                 <div id="w-temp" style="font-size: 1.4rem; font-weight: bold;">...</div>
-                <div id="countdown-box"></div>
+                <div id="countdown-box" style="display:none;"></div>
             </div>
         </div>
         <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
@@ -60,7 +60,7 @@
         <div id="sidebar"></div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">SYNCING...</div></div>
+    <div id="ticker"><div id="ticker-text">CONNECTING TO SYSTEM...</div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec"; 
@@ -80,15 +80,16 @@
 
         function updateTime() {
             const now = new Date();
+            const timeNum = now.getHours() * 100 + now.getMinutes();
+            const currentSeconds = now.getSeconds();
+            
             document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
             
-            const timeNum = now.getHours() * 100 + now.getMinutes();
-            const currentSeconds = now.getSeconds();
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
-            
             const isWarning = bells.some(b => (timeNum === b - 1));
             const inPassing = bells.some(b => (timeNum >= b && timeNum < b + 5));
+            const isMorning = (timeNum >= 800 && timeNum < 815);
             
             isBellTime = isWarning || inPassing;
             document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
@@ -100,11 +101,12 @@
             if (isWarning) {
                 tickerBox.classList.add('alert-active');
                 tickerText.innerText = "🚨 NEXT PERIOD STARTS IN 1 MINUTE - PLEASE HEAD TO CLASS 🚨";
-                
-                // Countdown Logic
-                const secondsLeft = 60 - currentSeconds;
                 countdownBox.style.display = "block";
-                countdownBox.innerText = `⚠️ BELL IN ${secondsLeft}s`;
+                countdownBox.innerText = `⚠️ BELL IN ${60 - currentSeconds}s`;
+            } else if (isMorning) {
+                tickerBox.classList.remove('alert-active');
+                tickerText.innerText = "☀️ GOOD MORNING NEW PATHWAYS ACADEMY! HAVE A GREAT DAY OF LEARNING! ☀️";
+                countdownBox.style.display = "none";
             } else {
                 tickerBox.classList.remove('alert-active');
                 tickerText.innerText = globalTickerText;
@@ -116,7 +118,6 @@
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
-                
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
@@ -133,7 +134,6 @@
                 } else {
                     sidebar.innerHTML = '';
                 }
-                
                 mediaItems = data.media;
             } catch(e) { console.log("Sync error"); }
         }
