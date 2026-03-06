@@ -122,46 +122,46 @@
         }
 
 function playMedia() {
-            const stage = document.getElementById('visuals');
-            if (!mediaItems || mediaItems.length === 0) { 
-                console.log("No media found yet...");
-                setTimeout(playMedia, 3000); 
-                return; 
-            }
-            
-            const item = mediaItems[mediaIdx];
-            stage.innerHTML = '';
+    const stage = document.getElementById('visuals');
+    if (!mediaItems || mediaItems.length === 0) { 
+        console.log("Waiting for media...");
+        setTimeout(playMedia, 3000); 
+        return; 
+    }
+    
+    const item = mediaItems[mediaIdx];
+    stage.innerHTML = '';
 
-            if (item.type === 'video') {
-                const vid = document.createElement('video');
-                vid.style.width = vid.style.height = "100%";
-                vid.muted = true; vid.autoplay = true;
-                // Direct download link for video
-                vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
-                vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
-                stage.appendChild(vid);
-            } else {
-                const img = new Image();
-                // Most stable link for Google Drive images
-                img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
-                img.style.width = img.style.height = "100%";
-                img.style.objectFit = "contain";
-                
-                img.onload = () => {
-                    stage.appendChild(img);
-                    setTimeout(() => { 
-                        mediaIdx = (mediaIdx + 1) % mediaItems.length; 
-                        playMedia(); 
-                    }, imgDuration);
-                };
-                
-                // Fallback if the first link fails
-                img.onerror = () => { 
-                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
-                };
-            }
-        }
+    if (item.type === 'video') {
+        const vid = document.createElement('video');
+        vid.style.width = vid.style.height = "100%";
+        vid.muted = true; vid.autoplay = true;
+        // Direct stream link for Google Drive videos
+        vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
+        vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+        vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+        stage.appendChild(vid);
+    } else {
+        const img = new Image();
+        // Updated stable image link for 2026
+        img.src = `https://drive.google.com/thumbnail?sz=w1920&id=${item.id}`;
+        img.style.width = img.style.height = "100%";
+        img.style.objectFit = "contain";
+        
+        img.onload = () => {
+            stage.appendChild(img);
+            setTimeout(() => { 
+                mediaIdx = (mediaIdx + 1) % mediaItems.length; 
+                playMedia(); 
+            }, imgDuration);
+        };
+        
+        img.onerror = () => { 
+            // Fallback if the thumbnail fails
+            img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
+        };
+    }
+}
 
         setInterval(updateTime, 1000);
         setInterval(updateData, 30000); 
