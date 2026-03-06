@@ -75,18 +75,22 @@
             } catch (e) { document.getElementById('w-temp').innerText = "10456"; }
         }
 
-        function updateTime() {
-            const now = new Date();
-            document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
-            
-            const timeNum = now.getHours() * 100 + now.getMinutes();
-            const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
-            
-            // Check if we are within the 5-minute window of a bell
-            isBellTime = bells.some(b => (timeNum - b >= 0 && timeNum - b < 5));
-            document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
-        }
+   function updateTime() {
+    const now = new Date();
+    document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+    document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
+    
+    const timeNum = now.getHours() * 100 + now.getMinutes();
+    const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
+    
+    // NEW LOGIC: Triggers 1 minute BEFORE the bell, stays for 5 minutes AFTER
+    isBellTime = bells.some(b => {
+        const warningTime = b - 1; // e.g., 847 becomes 846
+        return (timeNum >= warningTime && timeNum < b + 5);
+    });
+
+    document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
+}
 
         async function updateData() {
             try {
@@ -117,9 +121,14 @@
             } catch(e) { console.log("Sync error"); }
         }
 
-        function playMedia() {
+function playMedia() {
             const stage = document.getElementById('visuals');
-            if (mediaItems.length === 0) { setTimeout(playMedia, 3000); return; }
+            if (!mediaItems || mediaItems.length === 0) { 
+                console.log("No media found yet...");
+                setTimeout(playMedia, 3000); 
+                return; 
+            }
+            
             const item = mediaItems[mediaIdx];
             stage.innerHTML = '';
 
@@ -127,19 +136,30 @@
                 const vid = document.createElement('video');
                 vid.style.width = vid.style.height = "100%";
                 vid.muted = true; vid.autoplay = true;
+                // Direct download link for video
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
                 vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
             } else {
                 const img = new Image();
-                img.src = `https://lh3.googleusercontent.com/d/$${item.id}`;
+                // Most stable link for Google Drive images
+                img.src = `https://lh3.googleusercontent.com/d/${item.id}`;
                 img.style.width = img.style.height = "100%";
                 img.style.objectFit = "contain";
+                
                 img.onload = () => {
                     stage.appendChild(img);
-                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, imgDuration);
+                    setTimeout(() => { 
+                        mediaIdx = (mediaIdx + 1) % mediaItems.length; 
+                        playMedia(); 
+                    }, imgDuration);
                 };
-                img.onerror = () => { img.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
+                
+                // Fallback if the first link fails
+                img.onerror = () => { 
+                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
+                };
             }
         }
 
