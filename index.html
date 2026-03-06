@@ -39,9 +39,32 @@
         
         .alert-active { background: var(--alert-red) !important; }
         #countdown-box { color: var(--gold); font-weight: bold; font-size: 1.4rem; }
+
+        /* EMERGENCY OVERLAY STYLES */
+        #emergency-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #FF0000;
+            color: white;
+            z-index: 9999;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 50px;
+            animation: emergencyFlash 1s infinite;
+        }
+        @keyframes emergencyFlash { 0% { background: #FF0000; } 50% { background: #AA0000; } 100% { background: #FF0000; } }
+        #emergency-text { font-size: 6rem; font-weight: 900; text-transform: uppercase; margin-top: 20px; line-height: 1.1; }
     </style>
 </head>
 <body>
+
+    <div id="emergency-overlay">
+        <div style="font-size: 4rem; font-weight: bold;">⚠️ EMERGENCY ALERT ⚠️</div>
+        <div id="emergency-text">PLEASE FOLLOW SYSTEM INSTRUCTIONS</div>
+    </div>
 
     <div id="header">
         <div style="width: 35%; display: flex; align-items: center;">
@@ -118,6 +141,19 @@
             try {
                 const res = await fetch(API_URL);
                 const data = await res.json();
+                
+                // EMERGENCY CHECK
+                const emerOverlay = document.getElementById('emergency-overlay');
+                const emerText = document.getElementById('emergency-text');
+
+                if (data.settings.mode === "EMERGENCY") {
+                    emerOverlay.style.display = "flex";
+                    emerText.innerText = data.settings.ticker; // Pulls from B5
+                    return; // Halt other updates
+                } else {
+                    emerOverlay.style.display = "none";
+                }
+
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
                 document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
