@@ -186,19 +186,20 @@
                 globalTickerText = data.settings.ticker;
                 mediaItems = data.media;
 
-                // SIDEBAR SCHEDULE LOGIC
+            // SIDEBAR SCHEDULE LOGIC - SMART FILTER (HIDDEN DAY)
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
                     let html = `<h2 style="color:var(--gold); text-align:center; font-size:2.4rem; margin-bottom:15px; border-bottom: 4px solid var(--gold); padding-bottom: 10px;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th style="width:110px;">CLASS</th><th>LOCATION DETAILS</th></tr>`;
+                    
                     data.allSchedules.forEach(s => {
-                        // Display classes for current day
-                        if (s.day === dayCode || !s.day) {
+                        // The TV checks the day here (HIDDEN logic)
+                        if (s.day === dayCode) { 
                             html += `<tr>
                                 <td style="color:var(--gold); font-weight:bold; font-size:2.2rem; vertical-align:middle;">${s.class}</td>
                                 <td>
-                                    <span class="room-line">ROOM: ${s.room}</span>
+                                    <span class="room-line">${s.room}</span>
                                     <span class="subject-line">${s.subject}</span>
-                                    <span class="teacher-line">TEACHER: ${s.teacher}</span>
+                                    <span class="teacher-line">${s.teacher}</span>
                                 </td>
                             </tr>`;
                         }
