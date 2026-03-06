@@ -2,68 +2,57 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>New Pathways Signage</title>
+    <title>New Pathways Signage - Master</title>
     <style>
         :root {
-            --school-blue: #003366;
-            --gold: #FFD700;
-            --dark: #121212;
-            --alert-red: #CC0000;
-            --ticker-speed: 110s;
-            --sidebar-speed: 0.8s;
+            --school-blue: #003366; --gold: #FFD700; --dark: #121212;
+            --alert-red: #CC0000; --ticker-speed: 110s; --sidebar-speed: 0.8s;
         }
         body { margin: 0; background: black; color: white; font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
         
-        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; }
+        #header { height: 12vh; background: var(--school-blue); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; border-bottom: 4px solid var(--gold); flex-shrink: 0; z-index: 2000; }
         .logo-img { height: 8vh; width: auto; }
-        
-        #clock-container { text-align: center; flex-grow: 1; }
         #clock { font-size: 3.5rem; font-weight: bold; }
         #date { font-size: 1.1rem; color: var(--gold); text-transform: uppercase; }
 
-        #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; }
-        #visuals { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; transition: width var(--sidebar-speed) ease-in-out; }
-        #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; background: black; }
+        #main-area { display: flex; flex-grow: 1; height: 78vh; background: #000; overflow: hidden; position: relative; }
+        #visuals, #live-container { width: 100%; height: 100%; position: absolute; top:0; left:0; }
+        #visuals img, #visuals video { width: 100%; height: 100%; object-fit: contain; }
 
-        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; }
-        .bell-active #visuals { width: 50%; }
+        #sidebar { width: 0%; background: var(--dark); padding: 0; opacity: 0; display: flex; flex-direction: column; justify-content: center; transition: all var(--sidebar-speed) ease-in-out; border-left: 0px solid var(--gold); overflow: hidden; z-index: 10; }
+        .bell-active #visuals, .bell-active #live-container { width: 50%; }
         .bell-active #sidebar { width: 50%; padding: 30px; opacity: 1; border-left: 5px solid var(--gold); }
 
-        .sched-table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        .sched-table { width: 100%; border-collapse: collapse; margin-top: 5px; color: white; }
         .sched-table th { text-align: left; padding: 8px; font-size: 0.9rem; color: var(--gold); border-bottom: 2px solid var(--gold); }
         .sched-table td { padding: 10px 8px; border-bottom: 1px solid #333; font-size: 1.1rem; }
 
-        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); transition: background 0.3s ease; }
+        #ticker { height: 10vh; background: var(--school-blue); display: flex; align-items: center; overflow: hidden; border-top: 4px solid var(--gold); z-index: 2000; }
         #ticker-text { white-space: nowrap; font-size: 2.8rem; font-weight: bold; animation: scroll var(--ticker-speed) linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-        
         .alert-active { background: var(--alert-red) !important; }
-        #countdown-box { color: var(--gold); font-weight: bold; font-size: 1.4rem; }
 
-        /* EMERGENCY OVERLAY STYLES */
-        #emergency-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #FF0000;
-            color: white;
-            z-index: 9999;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 50px;
-            animation: emergencyFlash 1s infinite;
-        }
-        @keyframes emergencyFlash { 0% { background: #FF0000; } 50% { background: #AA0000; } 100% { background: #FF0000; } }
-        #emergency-text { font-size: 6rem; font-weight: 900; text-transform: uppercase; margin-top: 20px; line-height: 1.1; }
+        /* BIRTHDAY & CONFETTI */
+        #birthday-overlay { display: none; position: absolute; width: 100%; height: 100%; background: linear-gradient(45deg, #FF69B4, #87CEEB); z-index: 1500; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+        .confetti { position: absolute; width: 15px; height: 15px; top: -20px; animation: fall linear infinite; }
+        @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+        .bday-text { font-size: 5rem; font-weight: 900; animation: bounce 1s infinite; text-shadow: 4px 4px 10px rgba(0,0,0,0.3); }
+        @keyframes bounce { 50% { transform: translateY(-20px); } }
+
+        #emergency-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #FF0000; color: white; z-index: 9999; flex-direction: column; justify-content: center; align-items: center; text-align: center; animation: emergencyFlash 1s infinite; }
+        @keyframes emergencyFlash { 0%, 100% { background: #FF0000; } 50% { background: #AA0000; } }
     </style>
 </head>
 <body>
 
     <div id="emergency-overlay">
         <div style="font-size: 4rem; font-weight: bold;">⚠️ EMERGENCY ALERT ⚠️</div>
-        <div id="emergency-text">PLEASE FOLLOW SYSTEM INSTRUCTIONS</div>
+        <div id="emergency-text" style="font-size: 5rem; font-weight: 900;">PLEASE FOLLOW INSTRUCTIONS</div>
+    </div>
+
+    <div id="birthday-overlay">
+        <div class="bday-text">🎉 HAPPY BIRTHDAY! 🎉</div>
+        <div id="bday-names" style="font-size: 4rem; margin-top: 20px; font-weight: bold;"></div>
     </div>
 
     <div id="header">
@@ -71,27 +60,26 @@
             <img src="https://www.newpathwaysacademy.org/pics/school_logo.png" class="logo-img">
             <div style="margin-left:20px;">
                 <div id="w-temp" style="font-size: 1.4rem; font-weight: bold;">...</div>
-                <div id="countdown-box" style="display:none;"></div>
+                <div id="countdown-box" style="color: var(--gold); font-weight: bold; font-size: 1.2rem; display:none;"></div>
             </div>
         </div>
-        <div id="clock-container"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
+        <div style="text-align: center;"><div id="clock">00:00:00</div><div id="date">LOADING...</div></div>
         <div style="width: 30%; text-align: right;"><img src="https://www.newpathwaysacademy.org/pics/ibimg.png" class="logo-img"></div>
     </div>
 
     <div id="main-area">
         <div id="visuals"></div>
+        <div id="live-container" style="display:none;"></div>
         <div id="sidebar"></div>
     </div>
 
-    <div id="ticker"><div id="ticker-text">CONNECTING TO SYSTEM...</div></div>
+    <div id="ticker"><div id="ticker-text">CONNECTING...</div></div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbw1GJokTmNPlhliuUyjgVs6G5gG4B5gYO9BW-HKLRHp0qgsnEN32eQbAPJc2lT3o-h-yA/exec"; 
-        let mediaItems = [];
-        let mediaIdx = 0;
-        let isBellTime = false;
-        let imgDuration = 5000;
-        let globalTickerText = "";
+        let mediaItems = []; let mediaIdx = 0; let isBellTime = false;
+        let imgDuration = 5000; let globalTickerText = "";
+        let birthdayShownToday = false;
 
         async function fetchWeather() {
             try {
@@ -101,10 +89,23 @@
             } catch (e) { document.getElementById('w-temp').innerText = "10456"; }
         }
 
+        function createConfetti() {
+            const container = document.getElementById('birthday-overlay');
+            for(let i=0; i<30; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.backgroundColor = ['#FFD700','#FF1493','#00BFFF','#32CD32'][Math.floor(Math.random()*4)];
+                c.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                c.style.animationDelay = (Math.random() * 5) + 's';
+                container.appendChild(c);
+            }
+        }
+
         function updateTime() {
             const now = new Date();
             const timeNum = now.getHours() * 100 + now.getMinutes();
-            const currentSeconds = now.getSeconds();
+            const secs = now.getSeconds();
             
             document.getElementById('clock').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
             document.getElementById('date').innerText = now.toLocaleDateString(undefined, {weekday: 'long', month: 'short', day: 'numeric'});
@@ -112,7 +113,6 @@
             const bells = [800, 847, 935, 1023, 1111, 1158, 1246, 1334];
             const isWarning = bells.some(b => (timeNum === b - 1));
             const inPassing = bells.some(b => (timeNum >= b && timeNum < b + 5));
-            const isMorning = (timeNum >= 800 && timeNum < 815);
             
             isBellTime = isWarning || inPassing;
             document.getElementById('main-area').className = isBellTime ? "bell-active" : "";
@@ -125,11 +125,7 @@
                 tickerBox.classList.add('alert-active');
                 tickerText.innerText = "🚨 NEXT PERIOD STARTS IN 1 MINUTE - PLEASE HEAD TO CLASS 🚨";
                 countdownBox.style.display = "block";
-                countdownBox.innerText = `⚠️ BELL IN ${60 - currentSeconds}s`;
-            } else if (isMorning) {
-                tickerBox.classList.remove('alert-active');
-                tickerText.innerText = "☀️ GOOD MORNING NEW PATHWAYS ACADEMY! HAVE A GREAT DAY OF LEARNING! ☀️";
-                countdownBox.style.display = "none";
+                countdownBox.innerText = `⚠️ BELL IN ${60 - secs}s`;
             } else {
                 tickerBox.classList.remove('alert-active');
                 tickerText.innerText = globalTickerText;
@@ -142,94 +138,82 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 
-                // EMERGENCY CHECK
+                // 1. EMERGENCY
                 const emerOverlay = document.getElementById('emergency-overlay');
-                const emerText = document.getElementById('emergency-text');
-
                 if (data.settings.mode === "EMERGENCY") {
                     emerOverlay.style.display = "flex";
-                    emerText.innerText = data.settings.ticker; // Pulls from B5
-                    return; // Halt other updates
+                    document.getElementById('emergency-text').innerText = data.settings.ticker;
+                    return;
+                } else { emerOverlay.style.display = "none"; }
+
+                // 2. LIVE STREAM
+                const liveBox = document.getElementById('live-container');
+                const visuals = document.getElementById('visuals');
+                if (data.settings.mode === "LIVE" && data.liveUrl) {
+                    visuals.style.display = "none";
+                    liveBox.style.display = "block";
+                    if(!liveBox.innerHTML) liveBox.innerHTML = `<iframe width="100%" height="100%" src="${data.liveUrl.replace('watch?v=', 'embed/')}?autoplay=1&mute=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
                 } else {
-                    emerOverlay.style.display = "none";
+                    visuals.style.display = "block";
+                    liveBox.style.display = "none";
+                    liveBox.innerHTML = "";
                 }
 
+                // 3. BIRTHDAYS
+                if (data.birthdays && data.birthdays.length > 0 && !birthdayShownToday) {
+                    const bdayOverlay = document.getElementById('birthday-overlay');
+                    document.getElementById('bday-names').innerText = data.birthdays.join(" & ");
+                    bdayOverlay.style.display = "flex";
+                    createConfetti();
+                    birthdayShownToday = true;
+                    setTimeout(() => { bdayOverlay.style.display = "none"; }, 15000);
+                }
+
+                // Global Settings
                 document.documentElement.style.setProperty('--school-blue', data.settings.primary);
                 document.documentElement.style.setProperty('--gold', data.settings.accent);
-                document.documentElement.style.setProperty('--ticker-speed', data.settings.tickerSpeed + 's');
                 imgDuration = data.settings.imageDuration * 1000;
                 globalTickerText = data.settings.ticker;
+                mediaItems = data.media;
 
+                // Sidebar
                 const sidebar = document.getElementById('sidebar');
                 if (isBellTime) {
-                    let html = `<h2 style="color:var(--gold); text-align:center; margin:0; font-size:2rem; padding-bottom:10px;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
+                    let html = `<h2 style="color:var(--gold); text-align:center; font-size:2rem; margin:0;">CLASS LOCATIONS</h2><table class="sched-table"><tr><th>CLASS</th><th>SUBJECT</th><th>ROOM</th><th>TEACHER</th></tr>`;
                     data.allSchedules.forEach(s => {
                         html += `<tr><td style="color:var(--gold); font-weight:bold;">${s.class}</td><td>${s.subject}</td><td>${s.room}</td><td>${s.teacher}</td></tr>`;
                     });
                     sidebar.innerHTML = html + '</table>';
-                } else {
-                    sidebar.innerHTML = '';
                 }
-                mediaItems = data.media;
             } catch(e) { console.log("Sync error"); }
         }
 
-function playMedia() {
+        function playMedia() {
             const stage = document.getElementById('visuals');
-            
-            // 1. Safety Check: If no media is found yet, wait 3 seconds and try again
             if (!mediaItems || mediaItems.length === 0) { 
-                console.log("Searching for media in Drive...");
                 setTimeout(playMedia, 3000); 
                 return; 
             }
-
             const item = mediaItems[mediaIdx];
-            stage.innerHTML = ''; // Clear the current screen
+            stage.innerHTML = ''; 
 
             if (item.type === 'video') {
-                // VIDEO LOGIC
                 const vid = document.createElement('video');
-                vid.style.width = "100%";
-                vid.style.height = "100%";
-                vid.muted = true; 
-                vid.autoplay = true;
-                vid.playsInline = true;
-                // High-compatibility stream link
+                vid.style.width = "100%"; vid.style.height = "100%";
+                vid.muted = true; vid.autoplay = true; vid.playsInline = true;
                 vid.src = `https://drive.google.com/uc?export=download&id=${item.id}`;
-                
-                vid.onended = () => { 
-                    mediaIdx = (mediaIdx + 1) % mediaItems.length; 
-                    playMedia(); 
-                };
-                vid.onerror = () => { 
-                    console.error("Video failed to load, skipping...");
-                    mediaIdx = (mediaIdx + 1) % mediaItems.length; 
-                    playMedia(); 
-                };
+                vid.onended = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
+                vid.onerror = () => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); };
                 stage.appendChild(vid);
             } else {
-                // IMAGE LOGIC
                 const img = new Image();
-                // We use the 'thumbnail' link because it is much faster and bypasses most security blocks
                 img.src = `https://drive.google.com/thumbnail?sz=w1920&id=${item.id}`;
-                img.style.width = "100%";
-                img.style.height = "100%";
-                img.style.objectFit = "contain";
-                
+                img.style.width = "100%"; img.style.height = "100%"; img.style.objectFit = "contain";
                 img.onload = () => {
                     stage.appendChild(img);
-                    // Use the duration set in your Google Sheet (Cell B8)
-                    setTimeout(() => { 
-                        mediaIdx = (mediaIdx + 1) % mediaItems.length; 
-                        playMedia(); 
-                    }, imgDuration);
+                    setTimeout(() => { mediaIdx = (mediaIdx + 1) % mediaItems.length; playMedia(); }, imgDuration);
                 };
-                
-                img.onerror = () => { 
-                    console.error("Image failed, trying alternate link...");
-                    img.src = `https://drive.google.com/uc?export=view&id=${item.id}`;
-                };
+                img.onerror = () => { img.src = `https://drive.google.com/uc?export=view&id=${item.id}`; };
             }
         }
 
